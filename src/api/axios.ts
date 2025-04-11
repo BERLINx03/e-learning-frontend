@@ -9,6 +9,92 @@ export interface ApiResponse<T = any> {
   statusCode: number;
 }
 
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  createdAt: string;
+  lastLogin: string;
+  isActive: boolean;
+  role: string;
+  timeoutUntil?: string;
+  profilePictureUrl?: string;
+  bio?: string;
+}
+
+export interface Message {
+  id: number;
+  courseId: number;
+  instructorId: number;
+  instructor: User;
+  message: string;
+  sentAt: string;
+  isRead: boolean;
+}
+
+export interface Progress {
+  id: number;
+  enrollmentId: number;
+  lessonId: number;
+  isCompleted: boolean;
+  completedAt: string;
+  quizScore: number;
+}
+
+export interface Certificate {
+  id: number;
+  enrollmentId: number;
+  certificateUrl: string;
+  issuedAt: string;
+  certificateNumber: string;
+}
+
+export interface Enrollment {
+  id: number;
+  studentId: number;
+  student: User;
+  courseId: number;
+  enrolledAt: string;
+  isCompleted: boolean;
+  completedAt: string;
+  finalGrade: number;
+  certificate?: Certificate;
+  progress: Progress[];
+}
+
+export interface Answer {
+  id: number;
+  questionId: number;
+  answerText: string;
+  isCorrect: boolean;
+}
+
+export interface QuizQuestion {
+  id: number;
+  lessonId: number;
+  questionText: string;
+  points: number;
+  answers: Answer[];
+}
+
+export interface Lesson {
+  id: number;
+  title: string;
+  content: string;
+  description: string;
+  courseId: number;
+  order: number;
+  videoUrl?: string;
+  documentUrl?: string;
+  isQuiz: boolean;
+  createdAt: string;
+  updatedAt: string;
+  quizQuestions: QuizQuestion[];
+  progress: Progress[];
+}
+
 export interface Course {
   id: number;
   title: string;
@@ -21,10 +107,10 @@ export interface Course {
   createdAt: string;
   updatedAt: string;
   instructorId: number;
-  instructor?: any;
-  lessons?: any[];
-  enrollments?: any[];
-  messages?: any[];
+  instructor: User;
+  lessons: Lesson[];
+  enrollments: Enrollment[];
+  messages: Message[];
 }
 
 const API = axios.create({
@@ -101,8 +187,8 @@ export const CourseAPI = {
     }
   },
 
-  // Get a specific course by ID
-  getCourseById: async (id: string): Promise<ApiResponse<Course>> => {
+  // Get a specific course by ID with full details
+  getCourseById: async (id: number): Promise<ApiResponse<Course>> => {
     try {
       const response = await API.get(`/api/Courses/${id}`);
       return response.data;
@@ -146,6 +232,39 @@ export const CourseAPI = {
       return response.data;
     } catch (error) {
       console.error(`Failed to delete course with ID ${courseId}:`, error);
+      throw error;
+    }
+  },
+
+  // Send a message in a course
+  sendCourseMessage: async (courseId: number, data: { message: string }): Promise<ApiResponse<Message>> => {
+    try {
+      const response = await API.post<ApiResponse<Message>>(`/api/Courses/${courseId}/messages`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      throw error;
+    }
+  },
+
+  // Get all messages for a course
+  getCourseMessages: async (courseId: number): Promise<ApiResponse<Message[]>> => {
+    try {
+      const response = await API.get<ApiResponse<Message[]>>(`/api/Courses/${courseId}/messages`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+      throw error;
+    }
+  },
+
+  // Mark a message as read
+  markMessageAsRead: async (courseId: number, messageId: number): Promise<ApiResponse<null>> => {
+    try {
+      const response = await API.put<ApiResponse<null>>(`/api/Courses/${courseId}/messages/${messageId}/read`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to mark message as read:', error);
       throw error;
     }
   }

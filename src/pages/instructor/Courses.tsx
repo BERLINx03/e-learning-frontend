@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { CourseAPI, Course } from '../../api/axios';
+import { CourseAPI, Course, Enrollment } from '../../api/axios';
 
 // Define types for our data
-interface CourseWithEnrollments extends Course {
-  enrollments: { id: number; studentId: number }[];
+type CourseWithEnrollments = Course & {
+  enrollments: (Enrollment & { id: number; studentId: number })[];
 }
 
 const InstructorCourses: React.FC = () => {

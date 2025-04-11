@@ -62,7 +62,7 @@ const CourseForm: React.FC = () => {
   const fetchCourse = async () => {
     try {
       setIsLoading(true);
-      const response = await CourseAPI.getCourseById(courseId as string);
+      const response = await CourseAPI.getCourseById(Number(courseId));
       
       if (response.isSuccess && response.data) {
         const course = response.data;

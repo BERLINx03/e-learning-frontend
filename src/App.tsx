@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Courses from './pages/Courses';
+import CourseDetails from './pages/CourseDetails';
 import InstructorDashboard from './pages/instructor/Dashboard';
 import InstructorCourses from './pages/instructor/Courses';
 import CourseForm from './pages/instructor/CourseForm';
@@ -30,6 +31,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/courses" element={<Courses />} />
+              <Route path="/courses/:id" element={<CourseDetails />} />
               
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
