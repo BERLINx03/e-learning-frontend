@@ -4,6 +4,7 @@ import { CourseAPI, Course } from '../api/axios';
 
 const Home: React.FC = () => {
   const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+  const [popularCourses, setPopularCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +20,16 @@ const Home: React.FC = () => {
       if (response.isSuccess && response.data) {
         // Only show published courses
         const publishedCourses = response.data.filter(course => course.isPublished);
+        
         // Get up to 6 courses for featured section
         setFeaturedCourses(publishedCourses.slice(0, 6));
+        
+        // Get top 3 courses with highest enrollment for popular section
+        const sortedByEnrollment = [...publishedCourses]
+          .sort((a, b) => (b.enrollments?.length || 0) - (a.enrollments?.length || 0))
+          .slice(0, 3);
+        
+        setPopularCourses(sortedByEnrollment);
       } else {
         setError(response.message || 'Failed to fetch courses');
       }
@@ -142,6 +151,92 @@ const Home: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Popular courses section */}
+      {!isLoading && popularCourses.length > 0 && (
+        <div className="bg-gray-50 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-extrabold text-gray-900">Popular Courses</h2>
+              <Link to="/courses" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                View all courses
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {popularCourses.map(course => (
+                <div key={course.id} className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <div className="relative aspect-video bg-gray-200">
+                    {course.thumbnailUrl ? (
+                      <img 
+                        src={course.thumbnailUrl} 
+                        alt={course.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-400 to-indigo-500 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3 bg-blue-600 text-white rounded-full px-3 py-1 text-xs font-semibold">
+                      {course.level}
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-center mb-2">
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{course.category}</span>
+                      <div className="ml-auto flex items-center text-yellow-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">{course.title}</h3>
+                    <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {course.instructor && (
+                          <span className="text-sm text-gray-500">by {course.instructor.firstName} {course.instructor.lastName}</span>
+                        )}
+                      </div>
+                      <div className="text-xl font-bold text-blue-600">${course.price.toFixed(2)}</div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center text-gray-500 text-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                          </svg>
+                          {course.enrollments?.length || 0} students
+                        </div>
+                        <Link
+                          to={`/courses/${course.id}`}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-300"
+                        >
+                          View Course
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Categories section */}
       <div className="bg-gray-50">

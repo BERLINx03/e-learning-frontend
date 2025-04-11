@@ -202,12 +202,36 @@ const Courses: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Explore Courses</h1>
-        
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero section */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Discover Your Next Skill</h1>
+            <p className="text-xl text-blue-100 mb-8">
+              Explore our collection of expert-taught courses and start learning today
+            </p>
+            <div className="relative max-w-xl">
+              <input
+                type="text"
+                placeholder="What do you want to learn today?"
+                value={searchTerm}
+                onChange={handleSearch}
+                className="w-full py-3 px-4 pr-12 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-12">
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8 rounded">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -220,135 +244,160 @@ const Courses: React.FC = () => {
             </div>
           </div>
         )}
-        
-        {/* Search and Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <div className="md:col-span-2">
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-              <input
-                type="text"
-                id="search"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Search for courses..."
-                value={searchTerm}
-                onChange={handleSearch}
-              />
-            </div>
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select
-                id="category"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                value={selectedCategory}
-                onChange={handleCategoryChange}
-              >
-                <option value="">All Categories</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-1">Level</label>
-              <select
-                id="level"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                value={selectedLevel}
-                onChange={handleLevelChange}
-              >
-                <option value="">All Levels</option>
-                {levels.map(level => (
-                  <option key={level} value={level}>{level}</option>
-                ))}
-              </select>
-            </div>
+
+        {/* Filters section */}
+        <div className="bg-white rounded-xl shadow-sm mb-8 overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Courses</h2>
+            <p className="text-sm text-gray-600">Find the perfect course for your needs</p>
           </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={resetFilters}
-              className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Reset Filters
-            </button>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="col-span-1 md:col-span-1">
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  id="category"
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  value={selectedCategory}
+                  onChange={handleCategoryChange}
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                <select
+                  id="level"
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  value={selectedLevel}
+                  onChange={handleLevelChange}
+                >
+                  <option value="">All Levels</option>
+                  {levels.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={resetFilters}
+                  className="w-full py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-        
-        {/* Course Listings */}
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <svg className="animate-spin h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+
+        {/* Courses Grid Section */}
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">All Courses</h2>
+            <p className="text-gray-500">
+              {filteredCourses.length} {filteredCourses.length === 1 ? 'course' : 'courses'} found
+            </p>
           </div>
-        ) : filteredCourses.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">No courses found</h3>
-            <p className="mt-1 text-gray-500">Try adjusting your search or filter criteria.</p>
-          </div>
-        ) :
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+              <p className="text-gray-500 text-lg">Loading courses...</p>
+            </div>
+          ) : filteredCourses.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-20 w-20 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="mt-4 text-xl font-medium text-gray-900">No courses found</h3>
+              <p className="mt-2 text-gray-500 max-w-md mx-auto">
+                We couldn't find any courses matching your search criteria. Try adjusting your filters or search term.
+              </p>
+              <button
+                onClick={resetFilters}
+                className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Clear all filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {currentCourses.map(course => (
-                <div key={course.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                  <div className="aspect-video bg-gray-200 relative">
+                <div key={course.id} className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100">
+                  <div className="relative aspect-video bg-gray-200 overflow-hidden">
                     {course.thumbnailUrl ? (
-                      <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
+                      <img 
+                        src={course.thumbnailUrl} 
+                        alt={course.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                      />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                       </div>
                     )}
-                    <div className="absolute top-2 right-2">
-                      <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        {course.level}
-                      </span>
+                    <div className="absolute top-3 right-3 bg-blue-600 text-white rounded-full px-3 py-1 text-xs font-semibold">
+                      {course.level}
                     </div>
                   </div>
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600">{course.title}</h3>
-                      <span className="text-lg font-bold text-blue-600">${course.price.toFixed(2)}</span>
+                  <div className="p-6">
+                    <span className="inline-block bg-blue-50 text-blue-700 rounded-full px-2 py-1 text-xs font-medium mb-2">
+                      {course.category}
+                    </span>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                      {course.title}
+                    </h3>
+                    <p className="text-gray-500 text-sm mb-4 line-clamp-2">
+                      {course.description}
+                    </p>
+                    
+                    {course.instructor && (
+                      <div className="flex items-center mb-3">
+                        <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 mr-2">
+                          {course.instructor.firstName.charAt(0)}{course.instructor.lastName.charAt(0)}
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {course.instructor.firstName} {course.instructor.lastName}
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                      <div className="text-lg font-bold text-blue-600">${course.price.toFixed(2)}</div>
+                      <Link
+                        to={`/courses/${course.id}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium"
+                      >
+                        View Course →
+                      </Link>
                     </div>
-                    <p className="text-sm text-gray-500 mb-2 line-clamp-2">{course.description}</p>
-                    <div className="flex items-center mb-4">
-                      <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">{course.category}</span>
-                      {course.instructor && (
-                        <span className="text-xs text-gray-500 ml-2">by {course.instructor.firstName} {course.instructor.lastName}</span>
-                      )}
-                    </div>
-                    <Link
-                      to={`/courses/${course.id}`}
-                      className="block w-full text-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      View Course
-                    </Link>
                   </div>
                 </div>
               ))}
             </div>
+          )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-8 flex justify-center">
-                <div className="flex space-x-1">
-                  {renderPaginationButtons()}
-                </div>
+          {/* Pagination */}
+          {!isLoading && filteredCourses.length > coursesPerPage && (
+            <div className="mt-12 flex justify-center">
+              <div className="flex space-x-1 bg-white p-2 rounded-lg shadow-sm">
+                {renderPaginationButtons()}
               </div>
-            )}
-            
-            {/* Results count */}
-            <div className="mt-4 text-center text-sm text-gray-500">
-              Showing {currentCourses.length} of {filteredCourses.length} courses
             </div>
-          </>
-        }
+          )}
+          
+          {/* Results count */}
+          {!isLoading && filteredCourses.length > 0 && (
+            <div className="mt-4 text-center text-sm text-gray-500">
+              Showing {indexOfFirstCourse + 1}-{Math.min(indexOfLastCourse, filteredCourses.length)} of {filteredCourses.length} courses
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
