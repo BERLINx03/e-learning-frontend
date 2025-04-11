@@ -239,12 +239,65 @@ const CourseDetails: React.FC = () => {
               </div>
               <div className="flex items-center space-x-4">
                 {isInstructor && (
-                  <button
-                    onClick={() => navigate(`/instructor/courses/edit/${course.id}`)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Edit Course
-                  </button>
+                  <>
+                    <button
+                      onClick={() => navigate(`/instructor/courses/edit/${course.id}`)}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Edit Course
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const updatedCourse = {
+                            title: course.title,
+                            description: course.description,
+                            category: course.category,
+                            level: course.level,
+                            language: course.language,
+                            whatYouWillLearn: course.whatYouWillLearn,
+                            thisCourseInclude: course.thisCourseInclude,
+                            duration: course.duration,
+                            price: course.price,
+                            thumbnailUrl: course.thumbnailUrl || '',
+                            isPublished: !course.isPublished
+                          };
+                          
+                          const response = await CourseAPI.updateCourse(course.id, updatedCourse);
+                          
+                          if (response.isSuccess) {
+                            fetchCourseDetails(); // Refresh the course details
+                          } else {
+                            alert(`Failed to update course status: ${response.message}`);
+                          }
+                        } catch (error) {
+                          console.error('Failed to update course status:', error);
+                          alert('Failed to update course status. Please try again.');
+                        }
+                      }}
+                      className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                        course.isPublished 
+                          ? 'border-yellow-300 bg-yellow-50 text-yellow-800 hover:bg-yellow-100 focus:ring-yellow-500' 
+                          : 'border-green-300 bg-green-50 text-green-800 hover:bg-green-100 focus:ring-green-500'
+                      }`}
+                    >
+                      {course.isPublished ? (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                          </svg>
+                          Unpublish
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Publish
+                        </>
+                      )}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
