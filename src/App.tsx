@@ -10,6 +10,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import InstructorDashboard from './pages/instructor/Dashboard';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
               {/* Instructor-only routes */}
               <Route element={<ProtectedRoute allowedRoles={['instructor']} />}>
                 <Route path="/course-management" element={<div>Course Management (Coming Soon)</div>} />
+                <Route path="/instructor-dashboard/*" element={<InstructorDashboard />} />
               </Route>
               
               {/* Admin-only routes */}
