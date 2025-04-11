@@ -11,7 +11,10 @@ import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import InstructorDashboard from './pages/instructor/Dashboard';
+import InstructorCourses from './pages/instructor/Courses';
 import CourseForm from './pages/instructor/CourseForm';
+import Profile from './pages/Profile';
+import ProfileEdit from './pages/ProfileEdit';
 
 function App() {
   return (
@@ -29,6 +32,9 @@ function App() {
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
                 {/* Add protected routes for both roles here */}
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/edit" element={<ProfileEdit />} />
+                <Route path="/settings" element={<div>Settings (Coming Soon)</div>} />
               </Route>
               
               {/* Student-only routes */}
@@ -38,8 +44,8 @@ function App() {
               
               {/* Instructor-only routes */}
               <Route element={<ProtectedRoute allowedRoles={['instructor']} />}>
-                <Route path="/course-management" element={<div>Course Management (Coming Soon)</div>} />
-                <Route path="/instructor-dashboard/*" element={<InstructorDashboard />} />
+                <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
+                <Route path="/instructor/courses" element={<InstructorCourses />} />
                 <Route path="/instructor/courses/create" element={<CourseForm />} />
                 <Route path="/instructor/courses/edit/:courseId" element={<CourseForm />} />
                 <Route path="/instructor/courses/:courseId/lessons" element={<div>Manage Lessons (Coming Soon)</div>} />

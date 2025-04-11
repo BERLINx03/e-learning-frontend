@@ -32,7 +32,7 @@ interface LoginResponse {
   statusCode: number;
 }
 
-interface AuthContextType {
+type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -40,7 +40,8 @@ interface AuthContextType {
   registerStudent: (firstName: string, lastName: string, username: string, email: string, password: string) => Promise<void>;
   registerInstructor: (firstName: string, lastName: string, username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-}
+  fetchUserProfile: () => Promise<void>;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -205,7 +206,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     registerStudent,
     registerInstructor,
-    logout
+    logout,
+    fetchUserProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

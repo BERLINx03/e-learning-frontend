@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import API from '../../api/axios';
+import API, { CourseAPI, Course, ApiResponse } from '../../api/axios';
 
 interface CourseFormData {
   title: string;
@@ -11,14 +11,6 @@ interface CourseFormData {
   price: number;
   thumbnailUrl: string;
   isPublished: boolean;
-}
-
-interface ApiResponse {
-  isSuccess: boolean;
-  message: string;
-  errors?: string[];
-  data?: any;
-  statusCode: number;
 }
 
 const CATEGORIES = [
@@ -70,10 +62,10 @@ const CourseForm: React.FC = () => {
   const fetchCourse = async () => {
     try {
       setIsLoading(true);
-      const response = await API.get<ApiResponse>(`/api/Courses/${courseId}`);
+      const response = await CourseAPI.getCourseById(courseId as string);
       
-      if (response.data.isSuccess && response.data.data) {
-        const course = response.data.data;
+      if (response.isSuccess && response.data) {
+        const course = response.data;
         
         setFormData({
           title: course.title,
@@ -85,7 +77,7 @@ const CourseForm: React.FC = () => {
           isPublished: course.isPublished
         });
       } else {
-        setError(response.data.message || 'Failed to load course data.');
+        setError(response.message || 'Failed to load course data.');
       }
     } catch (error) {
       console.error('Failed to fetch course:', error);
@@ -118,6 +110,9 @@ const CourseForm: React.FC = () => {
     setValidationErrors([]);
 
     try {
+      // Convert user.id to number if it's a string
+      const instructorId = typeof user?.id === 'string' ? parseInt(user.id, 10) : user?.id;
+
       const payload = {
         title: formData.title,
         description: formData.description,
@@ -125,33 +120,33 @@ const CourseForm: React.FC = () => {
         level: formData.level,
         price: formData.price,
         thumbnailUrl: formData.thumbnailUrl,
-        instructorId: user?.id
+        instructorId
       };
 
-      let response;
+      let response: ApiResponse<Course>;
       
       if (isEditMode) {
         // Update existing course
-        response = await API.put<ApiResponse>(`/api/Courses/${courseId}`, {
+        response = await CourseAPI.updateCourse(courseId as string, {
           ...payload,
           isPublished: formData.isPublished
         });
       } else {
         // Create new course
-        response = await API.post<ApiResponse>('/api/Courses', payload);
+        response = await CourseAPI.createCourse(payload);
       }
 
       // Check response status
-      if (response.data.isSuccess) {
+      if (response.isSuccess) {
         // Redirect back to course list
         navigate('/instructor-dashboard');
         setActiveTab('courses'); // Set the active tab to courses
       } else {
         // Handle API error response
-        setError(response.data.message || 'Failed to save course.');
+        setError(response.message || 'Failed to save course.');
         
-        if (response.data.errors && response.data.errors.length > 0) {
-          setValidationErrors(response.data.errors);
+        if (response.errors && response.errors.length > 0) {
+          setValidationErrors(response.errors);
         }
       }
     } catch (error: any) {
