@@ -191,11 +191,17 @@ const CourseForm: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-800">
+    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <h2 className="text-2xl font-semibold text-gray-800">
           {isEditMode ? 'Edit Course' : 'Create New Course'}
         </h2>
+        <p className="mt-1 text-sm text-gray-600">
+          {isEditMode 
+            ? 'Update your course information below' 
+            : 'Fill in the details below to create a new course'
+          }
+        </p>
       </div>
 
       {error && (
@@ -220,47 +226,53 @@ const CourseForm: React.FC = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-            Course Title
-          </label>
-          <input
-            type="text"
-            name="title"
-            id="title"
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            value={formData.title}
-            onChange={handleInputChange}
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="px-6 py-6 space-y-8">
+        <div className="space-y-6">
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+              Course Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="title"
+              id="title"
+              required
+              placeholder="e.g. Introduction to React Development"
+              className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+              value={formData.title}
+              onChange={handleInputChange}
+            />
+            <p className="mt-1 text-xs text-gray-500">Choose a clear, descriptive title for your course</p>
+          </div>
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            name="description"
-            id="description"
-            rows={5}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            value={formData.description}
-            onChange={handleInputChange}
-          />
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              Description <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              name="description"
+              id="description"
+              rows={5}
+              required
+              placeholder="Provide a detailed description of your course..."
+              className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+              value={formData.description}
+              onChange={handleInputChange}
+            />
+            <p className="mt-1 text-xs text-gray-500">Describe what students will learn in this course</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-              Category
+              Category <span className="text-red-500">*</span>
             </label>
             <select
               name="category"
               id="category"
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
               value={formData.category}
               onChange={handleInputChange}
             >
@@ -268,17 +280,18 @@ const CourseForm: React.FC = () => {
                 <option key={category} value={category}>{category}</option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-gray-500">Select the category that best fits your course</p>
           </div>
 
           <div>
             <label htmlFor="level" className="block text-sm font-medium text-gray-700">
-              Level
+              Level <span className="text-red-500">*</span>
             </label>
             <select
               name="level"
               id="level"
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
               value={formData.level}
               onChange={handleInputChange}
             >
@@ -286,13 +299,14 @@ const CourseForm: React.FC = () => {
                 <option key={level} value={level}>{level}</option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-gray-500">Indicate the skill level required for this course</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-              Price (USD)
+              Price (USD) <span className="text-red-500">*</span>
             </label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -305,7 +319,7 @@ const CourseForm: React.FC = () => {
                 min="0"
                 step="0.01"
                 required
-                className="block w-full pl-7 pr-12 rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="block w-full pl-7 pr-12 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                 placeholder="0.00"
                 value={formData.price}
                 onChange={handleInputChange}
@@ -314,6 +328,7 @@ const CourseForm: React.FC = () => {
                 <span className="text-gray-500 sm:text-sm">USD</span>
               </div>
             </div>
+            <p className="mt-1 text-xs text-gray-500">Set to 0 for a free course</p>
           </div>
 
           <div>
@@ -324,13 +339,19 @@ const CourseForm: React.FC = () => {
               name="status"
               id="status"
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
               value={formData.isPublished ? 'published' : 'draft'}
               onChange={handleInputChange}
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
             </select>
+            <p className="mt-1 text-xs text-gray-500">
+              {formData.isPublished 
+                ? 'Course will be visible to students' 
+                : 'Course will be saved as a draft and hidden from students'
+              }
+            </p>
           </div>
         </div>
 
@@ -342,42 +363,42 @@ const CourseForm: React.FC = () => {
             type="url"
             name="thumbnailUrl"
             id="thumbnailUrl"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
             value={formData.thumbnailUrl}
             onChange={handleInputChange}
             placeholder="https://example.com/image.jpg"
           />
-          <p className="mt-1 text-sm text-gray-500">
-            Leave empty to use a default image.
+          <p className="mt-1 text-xs text-gray-500">
+            Provide a URL for your course thumbnail image. Leave empty to use a default image.
           </p>
         </div>
 
         {formData.thumbnailUrl && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Image Preview</label>
-            <div className="mt-1">
+          <div className="border border-gray-200 rounded-md p-4 bg-gray-50">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Image Preview</label>
+            <div className="flex justify-center">
               <img 
                 src={formData.thumbnailUrl} 
                 alt="Course preview" 
-                className="h-40 object-cover rounded-md border border-gray-300"
+                className="h-48 object-cover rounded-md border border-gray-300 shadow-sm"
                 onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Invalid+Image+URL'}
               />
             </div>
           </div>
         )}
 
-        <div className="flex justify-end space-x-3 pt-5">
+        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
             type="button"
             onClick={() => navigate('/instructor-dashboard')}
-            className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSaving}
-            className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSaving ? (
               <span className="flex items-center">
