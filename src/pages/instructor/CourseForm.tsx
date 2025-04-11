@@ -8,6 +8,10 @@ interface CourseFormData {
   description: string;
   category: string;
   level: string;
+  language: string;
+  whatYouWillLearn: string[];
+  thisCourseInclude: string[];
+  duration: number;
   price: number;
   thumbnailUrl: string;
   isPublished: boolean;
@@ -33,6 +37,21 @@ const LEVELS = [
   'All Levels'
 ];
 
+const LANGUAGES = [
+  'English',
+  'Spanish',
+  'French',
+  'German',
+  'Italian',
+  'Portuguese',
+  'Russian',
+  'Chinese',
+  'Japanese',
+  'Korean',
+  'Arabic',
+  'Other'
+];
+
 const CourseForm: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const isEditMode = !!courseId;
@@ -47,6 +66,10 @@ const CourseForm: React.FC = () => {
     description: '',
     category: CATEGORIES[0],
     level: LEVELS[0],
+    language: LANGUAGES[0],
+    whatYouWillLearn: [''],
+    thisCourseInclude: [''],
+    duration: 0,
     price: 0,
     thumbnailUrl: '',
     isPublished: false
@@ -72,6 +95,10 @@ const CourseForm: React.FC = () => {
           description: course.description,
           category: course.category,
           level: course.level,
+          language: course.language,
+          whatYouWillLearn: course.whatYouWillLearn,
+          thisCourseInclude: course.thisCourseInclude,
+          duration: course.duration,
           price: course.price,
           thumbnailUrl: course.thumbnailUrl || '',
           isPublished: course.isPublished
@@ -95,12 +122,38 @@ const CourseForm: React.FC = () => {
         ...prev,
         isPublished: value === 'published'
       }));
+    } else if (name === 'duration' || name === 'price') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: parseFloat(value)
+      }));
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: name === 'price' ? parseFloat(value) : value
+        [name]: value
       }));
     }
+  };
+
+  const handleArrayInputChange = (index: number, value: string, field: 'whatYouWillLearn' | 'thisCourseInclude') => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field].map((item, i) => i === index ? value : item)
+    }));
+  };
+
+  const handleAddArrayItem = (field: 'whatYouWillLearn' | 'thisCourseInclude') => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: [...prev[field], '']
+    }));
+  };
+
+  const handleRemoveArrayItem = (index: number, field: 'whatYouWillLearn' | 'thisCourseInclude') => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field].filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,7 +163,6 @@ const CourseForm: React.FC = () => {
     setValidationErrors([]);
 
     try {
-      // Convert user.id to number if it's a string
       const instructorId = typeof user?.id === 'string' ? parseInt(user.id, 10) : user?.id;
 
       const payload = {
@@ -118,50 +170,35 @@ const CourseForm: React.FC = () => {
         description: formData.description,
         category: formData.category,
         level: formData.level,
+        language: formData.language,
+        whatYouWillLearn: formData.whatYouWillLearn.filter(item => item.trim() !== ''),
+        thisCourseInclude: formData.thisCourseInclude.filter(item => item.trim() !== ''),
+        duration: formData.duration,
         price: formData.price,
         thumbnailUrl: formData.thumbnailUrl,
-        instructorId
+        instructorId,
+        isPublished: formData.isPublished
       };
 
       let response: ApiResponse<Course>;
       
       if (isEditMode) {
-        // Update existing course
-        response = await CourseAPI.updateCourse(courseId as string, {
-          ...payload,
-          isPublished: formData.isPublished
-        });
+        response = await CourseAPI.updateCourse(courseId as string, payload);
       } else {
-        // Create new course
         response = await CourseAPI.createCourse(payload);
       }
 
-      // Check response status
       if (response.isSuccess) {
-        // Redirect back to course list
-        navigate('/instructor-dashboard');
-        setActiveTab('courses'); // Set the active tab to courses
+        navigate('/instructor/courses');
       } else {
-        // Handle API error response
         setError(response.message || 'Failed to save course.');
-        
         if (response.errors && response.errors.length > 0) {
           setValidationErrors(response.errors);
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save course:', error);
-      
-      // Try to extract error from response if available
-      if (error.response?.data?.message) {
-        setError(error.response.data.message);
-        
-        if (error.response.data.errors && error.response.data.errors.length > 0) {
-          setValidationErrors(error.response.data.errors);
-        }
-      } else {
-        setError('Failed to save course. Please check your inputs and try again.');
-      }
+      setError('Failed to save course. Please check your inputs and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -258,7 +295,7 @@ const CourseForm: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700">
               Category <span className="text-red-500">*</span>
@@ -296,6 +333,107 @@ const CourseForm: React.FC = () => {
             </select>
             <p className="mt-1 text-xs text-gray-500">Indicate the skill level required for this course</p>
           </div>
+
+          <div>
+            <label htmlFor="language" className="block text-sm font-medium text-gray-700">
+              Language <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="language"
+              id="language"
+              required
+              className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+              value={formData.language}
+              onChange={handleInputChange}
+            >
+              {LANGUAGES.map(language => (
+                <option key={language} value={language}>{language}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
+              Duration (hours) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="duration"
+              id="duration"
+              min="0"
+              step="0.5"
+              required
+              className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+              value={formData.duration}
+              onChange={handleInputChange}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            What You'll Learn <span className="text-red-500">*</span>
+          </label>
+          {formData.whatYouWillLearn.map((item, index) => (
+            <div key={index} className="flex items-center space-x-2 mb-2">
+              <input
+                type="text"
+                value={item}
+                onChange={(e) => handleArrayInputChange(index, e.target.value, 'whatYouWillLearn')}
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                placeholder="e.g., Build responsive web applications"
+              />
+              <button
+                type="button"
+                onClick={() => handleRemoveArrayItem(index, 'whatYouWillLearn')}
+                className="text-red-500 hover:text-red-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => handleAddArrayItem('whatYouWillLearn')}
+            className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            + Add Learning Objective
+          </button>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            This Course Includes <span className="text-red-500">*</span>
+          </label>
+          {formData.thisCourseInclude.map((item, index) => (
+            <div key={index} className="flex items-center space-x-2 mb-2">
+              <input
+                type="text"
+                value={item}
+                onChange={(e) => handleArrayInputChange(index, e.target.value, 'thisCourseInclude')}
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                placeholder="e.g., 4 hours of on-demand video"
+              />
+              <button
+                type="button"
+                onClick={() => handleRemoveArrayItem(index, 'thisCourseInclude')}
+                className="text-red-500 hover:text-red-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => handleAddArrayItem('thisCourseInclude')}
+            className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            + Add Course Feature
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

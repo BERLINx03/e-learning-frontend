@@ -14,7 +14,7 @@ interface User {
   role: string;
 }
 
-interface Message {
+interface CourseMessage {
   id: number;
   courseId: number;
   instructorId: number;
@@ -91,16 +91,20 @@ interface Course {
   description: string;
   category: string;
   level: string;
+  language: string;
+  whatYouWillLearn: string[];
+  thisCourseInclude: string[];
+  duration: number;
   price: number;
   thumbnailUrl?: string;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
   instructorId: number;
-  instructor: User;
-  lessons: Lesson[];
-  enrollments: Enrollment[];
-  messages: Message[];
+  instructor?: User;
+  lessons?: Lesson[];
+  enrollments?: Enrollment[];
+  messages?: CourseMessage[];
 }
 
 const CourseDetails: React.FC = () => {
@@ -225,6 +229,9 @@ const CourseDetails: React.FC = () => {
                   <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                     {course.level}
                   </span>
+                  <span className="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                    {course.language}
+                  </span>
                   <span className="text-gray-500">
                     Created {formatDate(course.createdAt)}
                   </span>
@@ -245,6 +252,69 @@ const CourseDetails: React.FC = () => {
             <div className="mt-6">
               <h3 className="text-lg font-medium text-gray-900">Description</h3>
               <p className="mt-2 text-gray-600">{course.description}</p>
+            </div>
+
+            {/* What you'll learn section */}
+            <div className="mt-8">
+              <h3 className="text-lg font-medium text-gray-900">What you'll learn</h3>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {course.whatYouWillLearn.map((item, index) => (
+                  <div key={index} className="flex items-start">
+                    <svg className="h-5 w-5 text-green-500 mt-0.5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-gray-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* This course includes section */}
+            <div className="mt-8">
+              <h3 className="text-lg font-medium text-gray-900">This course includes</h3>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {course.thisCourseInclude.map((item, index) => (
+                  <div key={index} className="flex items-start">
+                    <svg className="h-5 w-5 text-blue-500 mt-0.5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                    </svg>
+                    <span className="text-gray-700">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Course details section */}
+            <div className="mt-8 border-t border-gray-200 pt-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex items-center">
+                  <svg className="h-6 w-6 text-gray-400 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm text-gray-500">Duration</p>
+                    <p className="font-medium text-gray-900">{course.duration} hours</p>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <svg className="h-6 w-6 text-gray-400 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                  </svg>
+                  <div>
+                    <p className="text-sm text-gray-500">Language</p>
+                    <p className="font-medium text-gray-900">{course.language}</p>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <svg className="h-6 w-6 text-gray-400 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm text-gray-500">Price</p>
+                    <p className="font-medium text-gray-900">${course.price.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="mt-6 border-t border-gray-200 pt-6">

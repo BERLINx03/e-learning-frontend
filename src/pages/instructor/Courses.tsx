@@ -91,14 +91,18 @@ const InstructorCourses: React.FC = () => {
       // Toggle the isPublished status
       const newStatus = !course.isPublished;
       
-      // Create a copy of the course data with the updated status
+      // Create a copy of the course data with all required fields
       const updatedCourse = {
         title: course.title,
         description: course.description,
         category: course.category,
         level: course.level,
+        language: course.language || 'English', // Include language field
+        whatYouWillLearn: course.whatYouWillLearn || [], // Include whatYouWillLearn field
+        thisCourseInclude: course.thisCourseInclude || [], // Include thisCourseInclude field
+        duration: course.duration || 0, // Include duration field
         price: course.price,
-        thumbnailUrl: course.thumbnailUrl,
+        thumbnailUrl: course.thumbnailUrl || '',
         isPublished: newStatus
       };
       

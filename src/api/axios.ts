@@ -24,7 +24,7 @@ export interface User {
   bio?: string;
 }
 
-export interface Message {
+export interface CourseMessage {
   id: number;
   courseId: number;
   instructorId: number;
@@ -101,16 +101,20 @@ export interface Course {
   description: string;
   category: string;
   level: string;
+  language: string;
+  whatYouWillLearn: string[];
+  thisCourseInclude: string[];
+  duration: number;
   price: number;
   thumbnailUrl?: string;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
   instructorId: number;
-  instructor: User;
-  lessons: Lesson[];
-  enrollments: Enrollment[];
-  messages: Message[];
+  instructor?: User;
+  lessons?: Lesson[];
+  enrollments?: Enrollment[];
+  messages?: CourseMessage[];
 }
 
 const API = axios.create({
@@ -237,9 +241,9 @@ export const CourseAPI = {
   },
 
   // Send a message in a course
-  sendCourseMessage: async (courseId: number, data: { message: string }): Promise<ApiResponse<Message>> => {
+  sendCourseMessage: async (courseId: number, data: { message: string }): Promise<ApiResponse<CourseMessage>> => {
     try {
-      const response = await API.post<ApiResponse<Message>>(`/api/Courses/${courseId}/messages`, data);
+      const response = await API.post<ApiResponse<CourseMessage>>(`/api/Courses/${courseId}/messages`, data);
       return response.data;
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -248,9 +252,9 @@ export const CourseAPI = {
   },
 
   // Get all messages for a course
-  getCourseMessages: async (courseId: number): Promise<ApiResponse<Message[]>> => {
+  getCourseMessages: async (courseId: number): Promise<ApiResponse<CourseMessage[]>> => {
     try {
-      const response = await API.get<ApiResponse<Message[]>>(`/api/Courses/${courseId}/messages`);
+      const response = await API.get<ApiResponse<CourseMessage[]>>(`/api/Courses/${courseId}/messages`);
       return response.data;
     } catch (error) {
       console.error('Failed to fetch messages:', error);
