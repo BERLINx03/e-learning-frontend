@@ -67,22 +67,58 @@ export const CourseAPI = {
   // Get all courses
   getAllCourses: async (): Promise<ApiResponse<Course[]>> => {
     try {
-      const response = await API.get<ApiResponse<Course[]>>('/api/Courses');
+      const response = await API.get('/api/Courses');
       return response.data;
     } catch (error) {
-      console.error('Failed to fetch courses:', error);
-      throw error;
+      console.error('Error fetching courses:', error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch courses',
+        errors: ['Network error while fetching courses'],
+        statusCode: 500
+      };
+    }
+  },
+  
+  // Search courses
+  searchCourses: async (searchTerm: string, category?: string, level?: string): Promise<ApiResponse<Course[]>> => {
+    try {
+      let url = `/api/Courses/search?term=${encodeURIComponent(searchTerm)}`;
+      
+      if (category) {
+        url += `&category=${encodeURIComponent(category)}`;
+      }
+      
+      if (level) {
+        url += `&level=${encodeURIComponent(level)}`;
+      }
+      
+      const response = await API.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error searching courses:', error);
+      return {
+        isSuccess: false,
+        message: 'Failed to search courses',
+        errors: ['Network error while searching courses'],
+        statusCode: 500
+      };
     }
   },
 
-  // Get course by ID
-  getCourseById: async (courseId: number | string): Promise<ApiResponse<Course>> => {
+  // Get a specific course by ID
+  getCourseById: async (id: string): Promise<ApiResponse<Course>> => {
     try {
-      const response = await API.get<ApiResponse<Course>>(`/api/Courses/${courseId}`);
+      const response = await API.get(`/api/Courses/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Failed to fetch course with ID ${courseId}:`, error);
-      throw error;
+      console.error(`Error fetching course ${id}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch course',
+        errors: ['Network error while fetching course'],
+        statusCode: 500
+      };
     }
   },
 
