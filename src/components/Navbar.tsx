@@ -5,10 +5,16 @@ import { useAuth } from '../contexts/AuthContext';
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Reset image error when user changes
+  useEffect(() => {
+    setImageError(false);
+  }, [user?.profilePictureUrl]);
 
   const handleLogout = () => {
     logout();
@@ -111,25 +117,28 @@ const Navbar: React.FC = () => {
               <div className="ml-3 relative" ref={profileDropdownRef}>
                 <div>
                   <button
-                    type="button"
-                    className="flex items-center text-sm rounded-full focus:outline-none"
-                    id="user-menu-button"
-                    aria-expanded={isProfileOpen}
-                    aria-haspopup="true"
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center space-x-3 max-w-xs bg-white rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 p-2"
+                    id="user-menu"
+                    aria-expanded="false"
+                    aria-haspopup="true"
                   >
                     <span className="sr-only">Open user menu</span>
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm mr-2">
-                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    {!imageError && user?.profilePictureUrl ? (
+                      <img
+                        className="h-8 w-8 rounded-full object-cover"
+                        src={user.profilePictureUrl}
+                        alt={`${user.firstName} ${user.lastName}`}
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                        <span className="text-sm font-medium text-purple-600">
+                          {user?.firstName?.[0]}{user?.lastName?.[0]}
+                        </span>
                       </div>
-                      <span className="text-gray-700 hover:text-blue-600 font-medium">
-                        {user?.firstName} {user?.lastName}
-                      </span>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </div>
+                    )}
+                    <span className="text-sm font-medium text-gray-700">{user?.firstName} {user?.lastName}</span>
                   </button>
                 </div>
                 {isProfileOpen && (
@@ -137,7 +146,7 @@ const Navbar: React.FC = () => {
                     className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
                     role="menu"
                     aria-orientation="vertical"
-                    aria-labelledby="user-menu-button"
+                    aria-labelledby="user-menu"
                     tabIndex={-1}
                   >
                     <Link
@@ -310,13 +319,28 @@ const Navbar: React.FC = () => {
               <div>
                 <div className="flex items-center px-4 py-2">
                   <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
-                    </div>
+                    {!imageError && user?.profilePictureUrl ? (
+                      <img
+                        className="h-10 w-10 rounded-full object-cover"
+                        src={user.profilePictureUrl}
+                        alt={`${user.firstName} ${user.lastName}`}
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                        <span className="text-sm font-medium text-purple-600">
+                          {user?.firstName?.[0]}{user?.lastName?.[0]}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="ml-3">
-                    <div className="text-base font-medium text-gray-800">{user?.firstName} {user?.lastName}</div>
-                    <div className="text-sm font-medium text-gray-500">{user?.email}</div>
+                    <div className="text-base font-medium text-gray-800">
+                      {user?.firstName} {user?.lastName}
+                    </div>
+                    <div className="text-sm font-medium text-gray-500">
+                      {user?.email}
+                    </div>
                   </div>
                 </div>
                 <div className="mt-3 space-y-1">

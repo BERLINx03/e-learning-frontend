@@ -116,11 +116,32 @@ const CourseDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({
+    thumbnail: false,
+    [`instructor-${course?.instructor?.id}`]: false,
+  });
 
   useEffect(() => {
     fetchCourseDetails();
   }, [id]);
+
+  useEffect(() => {
+    // Reset image errors when course data changes
+    if (course) {
+      setImageErrors({
+        thumbnail: false,
+        [`instructor-${course.instructor?.id}`]: false,
+        ...(course.messages?.reduce((acc, message) => ({
+          ...acc,
+          [`message-${message.id}`]: false
+        }), {})),
+        ...(course.enrollments?.reduce((acc, enrollment) => ({
+          ...acc,
+          [`enrollment-${enrollment.id}`]: false
+        }), {}))
+      });
+    }
+  }, [course]);
 
   const fetchCourseDetails = async () => {
     try {
@@ -281,22 +302,31 @@ const CourseDetails: React.FC = () => {
               </div>
 
               {/* Instructor Info */}
-              <div className="flex items-start mt-4">
-                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-gray-700">
-                  <img
-                    src={imageErrors[`instructor-${course.instructor?.id}`] ? '/default-avatar.png' : (course.instructor?.profilePictureUrl || '/default-avatar.png')}
-                    alt={`${course.instructor?.firstName} ${course.instructor?.lastName}`}
-                    className="w-full h-full object-cover"
-                    onError={() => handleImageError(`instructor-${course.instructor?.id}`)}
-                  />
+              <div className="flex items-start mt-6 bg-gray-800 rounded-lg p-6">
+                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-purple-500">
+                  {course.instructor?.profilePictureUrl && !imageErrors[`instructor-${course.instructor?.id}`] ? (
+                    <img
+                      src={course.instructor.profilePictureUrl}
+                      alt={`${course.instructor.firstName} ${course.instructor.lastName}`}
+                      className="w-full h-full object-cover"
+                      onError={() => handleImageError(`instructor-${course.instructor?.id}`)}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-purple-100 flex items-center justify-center">
+                      <span className="text-lg font-medium text-purple-600">
+                        {course.instructor?.firstName?.[0]?.toUpperCase()}
+                        {course.instructor?.lastName?.[0]?.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-400">Created by</p>
-                  <p className="text-blue-400 hover:text-blue-300">
+                <div className="ml-6 flex-1">
+                  <p className="text-sm text-gray-400 mb-1">Created by</p>
+                  <h3 className="text-xl font-semibold text-white mb-2">
                     {course.instructor?.firstName} {course.instructor?.lastName}
-                  </p>
+                  </h3>
                   {course.instructor?.bio && (
-                    <p className="mt-2 text-sm text-gray-300 max-w-2xl">
+                    <p className="text-sm text-gray-300 max-w-2xl line-clamp-2">
                       {course.instructor.bio}
                     </p>
                   )}
@@ -307,25 +337,30 @@ const CourseDetails: React.FC = () => {
             {/* Course Preview Card */}
             <div className="lg:col-span-1 mt-8 lg:mt-0">
               <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div className="aspect-w-16 aspect-h-9 bg-gray-200">
-                  {course.thumbnailUrl ? (
-                    <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
+                <div className="relative pb-[56.25%] bg-gray-200">
+                  {!imageErrors.thumbnail && course.thumbnailUrl ? (
+                    <img 
+                      src={course.thumbnailUrl} 
+                      alt={course.title} 
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={() => handleImageError('thumbnail')}
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                      <svg className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                     </div>
                   )}
                 </div>
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="text-3xl font-bold">£{course.price.toFixed(2)}</div>
-                    {isInstructor && (
-                      <div className="flex gap-2">
+                  <div className="flex flex-col gap-4">
+                    <div className="text-3xl font-bold text-gray-900">£{course.price.toFixed(2)}</div>
+                    {isInstructor ? (
+                      <div className="flex flex-col gap-2">
                         <button
                           onClick={() => navigate(`/instructor/courses/edit/${course.id}`)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                         >
                           Edit Course
                         </button>
@@ -358,7 +393,7 @@ const CourseDetails: React.FC = () => {
                               alert('Failed to update course status. Please try again.');
                             }
                           }}
-                          className={`px-4 py-2 rounded ${
+                          className={`w-full px-4 py-3 rounded-lg font-medium transition-colors ${
                             course.isPublished 
                               ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' 
                               : 'bg-green-100 text-green-800 hover:bg-green-200'
@@ -367,9 +402,8 @@ const CourseDetails: React.FC = () => {
                           {course.isPublished ? 'Unpublish' : 'Publish'}
                         </button>
                       </div>
-                    )}
-                    {!isInstructor && !isUserEnrolled && (
-                      <button className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
+                    ) : !isUserEnrolled && (
+                      <button className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors">
                         Enroll now
                       </button>
                     )}
@@ -428,12 +462,20 @@ const CourseDetails: React.FC = () => {
                   }`}
                 >
                   <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200">
-                    <img
-                      src={imageErrors[`message-${message.id}`] ? '/default-avatar.png' : (message?.instructor?.profilePictureUrl || '/default-avatar.png')}
-                      alt={`${message?.instructor?.firstName} ${message?.instructor?.lastName}`}
-                      className="w-full h-full object-cover"
-                      onError={() => handleImageError(`message-${message.id}`)}
-                    />
+                    {!imageErrors[`message-${message.id}`] && message.instructor?.profilePictureUrl ? (
+                      <img
+                        src={message.instructor?.profilePictureUrl}
+                        alt={`${message.instructor?.firstName} ${message.instructor?.lastName}`}
+                        className="w-full h-full object-cover"
+                        onError={() => handleImageError(`message-${message.id}`)}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-purple-100 flex items-center justify-center">
+                        <span className="text-xs font-medium text-purple-600">
+                          {message.instructor?.firstName?.[0]}{message.instructor?.lastName?.[0]}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -504,12 +546,20 @@ const CourseDetails: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200">
-                            <img
-                              src={imageErrors[`enrollment-${enrollment.id}`] ? '/default-avatar.png' : (enrollment?.student?.profilePictureUrl || '/default-avatar.png')}
-                              alt={`${enrollment?.student?.firstName} ${enrollment?.student?.lastName}`}
-                              className="w-full h-full object-cover"
-                              onError={() => handleImageError(`enrollment-${enrollment.id}`)}
-                            />
+                            {!imageErrors[`enrollment-${enrollment.id}`] && enrollment.student?.profilePictureUrl ? (
+                              <img
+                                src={enrollment.student?.profilePictureUrl}
+                                alt={`${enrollment.student?.firstName} ${enrollment.student?.lastName}`}
+                                className="w-full h-full object-cover"
+                                onError={() => handleImageError(`enrollment-${enrollment.id}`)}
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-purple-100 flex items-center justify-center">
+                                <span className="text-xs font-medium text-purple-600">
+                                  {enrollment.student?.firstName?.[0]}{enrollment.student?.lastName?.[0]}
+                                </span>
+                              </div>
+                            )}
                           </div>
                           <div className="ml-3">
                             <p className="text-sm font-medium text-gray-900">

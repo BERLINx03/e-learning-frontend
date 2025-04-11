@@ -201,6 +201,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const updateUser = (user: User) => {
+    // Preserve the token when updating user
+    const token = localStorage.getItem('token');
+    if (token) {
+      API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
     setUser(user);
   };
 
