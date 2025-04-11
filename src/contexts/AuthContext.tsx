@@ -4,8 +4,11 @@ import API from '../api/axios';
 interface User {
   id: string;
   username: string;
-  name: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  profilePictureUrl?: string;
+  bio?: string;
   role: 'student' | 'instructor' | 'admin';
 }
 
@@ -13,7 +16,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   registerStudent: (firstName: string, lastName: string, username: string, email: string, password: string) => Promise<void>;
   registerInstructor: (firstName: string, lastName: string, username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -60,14 +63,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (username: string, password: string) => {
     try {
-      const response = await API.post('/api/Users/login', { email, password });
-      const { token, user } = response.data;
+      const response = await API.post('/api/Users/login', { username, password });
       
-      localStorage.setItem('token', token);
-      
-      setUser(user);
+      // Check if the login was successful
+      if (response.data.isSuccess) {
+        const { token, user, role } = response.data.data;
+        
+        localStorage.setItem('token', token);
+        
+        // Create a user object that includes the role
+        const userData = {
+          ...user,
+          role: role.toLowerCase()
+        };
+        
+        setUser(userData);
+      } else {
+        throw new Error(response.data.message || 'Login failed');
+      }
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
