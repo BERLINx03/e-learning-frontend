@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import InstructorDashboard from './pages/instructor/Dashboard';
+import CourseForm from './pages/instructor/CourseForm';
 
 function App() {
   return (
@@ -39,6 +40,9 @@ function App() {
               <Route element={<ProtectedRoute allowedRoles={['instructor']} />}>
                 <Route path="/course-management" element={<div>Course Management (Coming Soon)</div>} />
                 <Route path="/instructor-dashboard/*" element={<InstructorDashboard />} />
+                <Route path="/instructor/courses/create" element={<CourseForm />} />
+                <Route path="/instructor/courses/edit/:courseId" element={<CourseForm />} />
+                <Route path="/instructor/courses/:courseId/lessons" element={<div>Manage Lessons (Coming Soon)</div>} />
               </Route>
               
               {/* Admin-only routes */}
