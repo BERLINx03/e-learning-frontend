@@ -5,7 +5,9 @@ import { useAuth } from '../../contexts/AuthContext';
 type UserRole = 'student' | 'instructor';
 
 const Register: React.FC = () => {
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -17,6 +19,18 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
 
   const validateForm = () => {
+    if (!firstName.trim()) {
+      setError('First name is required');
+      return false;
+    }
+    if (!lastName.trim()) {
+      setError('Last name is required');
+      return false;
+    }
+    if (!username.trim()) {
+      setError('Username is required');
+      return false;
+    }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return false;
@@ -38,9 +52,9 @@ const Register: React.FC = () => {
 
     try {
       if (role === 'student') {
-        await registerStudent(name, email, password);
+        await registerStudent(firstName, lastName, username, email, password);
       } else {
-        await registerInstructor(name, email, password);
+        await registerInstructor(firstName, lastName, username, email, password);
       }
       navigate('/'); // Redirect to home page after registration
     } catch (err: any) {
@@ -73,19 +87,53 @@ const Register: React.FC = () => {
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="first-name" className="sr-only">
+                  First Name
+                </label>
+                <input
+                  id="first-name"
+                  name="firstName"
+                  type="text"
+                  required
+                  className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="First Name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="last-name" className="sr-only">
+                  Last Name
+                </label>
+                <input
+                  id="last-name"
+                  name="lastName"
+                  type="text"
+                  required
+                  className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="Last Name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+            </div>
+            
             <div>
-              <label htmlFor="name" className="sr-only">
-                Full Name
+              <label htmlFor="username" className="sr-only">
+                Username
               </label>
               <input
-                id="name"
-                name="name"
+                id="username"
+                name="username"
                 type="text"
                 required
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             
