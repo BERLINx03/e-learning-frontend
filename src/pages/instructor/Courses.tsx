@@ -11,9 +11,13 @@ interface CourseWithEnrollments extends Course {
 const InstructorCourses: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [courses, setCourses] = useState<CourseWithEnrollments[]>([]);
+  const [allCourses, setAllCourses] = useState<CourseWithEnrollments[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 10;
 
   useEffect(() => {
     // Check if user is instructor
@@ -40,7 +44,7 @@ const InstructorCourses: React.FC = () => {
           (course) => course.instructorId === user?.id || course.instructorId.toString() === userId
         ) as CourseWithEnrollments[];
         
-        setCourses(instructorCourses);
+        setAllCourses(instructorCourses);
       } else {
         setError(response.message || 'Failed to fetch courses');
         console.error('Failed to fetch courses:', response.message);
@@ -82,11 +86,23 @@ const InstructorCourses: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (courseId: number, isPublished: boolean) => {
+  const handleToggleStatus = async (courseId: number, course: CourseWithEnrollments) => {
     try {
-      const response = await CourseAPI.updateCourse(courseId, { 
-        isPublished: !isPublished 
-      });
+      // Toggle the isPublished status
+      const newStatus = !course.isPublished;
+      
+      // Create a copy of the course data with the updated status
+      const updatedCourse = {
+        title: course.title,
+        description: course.description,
+        category: course.category,
+        level: course.level,
+        price: course.price,
+        thumbnailUrl: course.thumbnailUrl,
+        isPublished: newStatus
+      };
+      
+      const response = await CourseAPI.updateCourse(courseId, updatedCourse);
       
       if (response.isSuccess) {
         // Refresh course list
@@ -98,6 +114,65 @@ const InstructorCourses: React.FC = () => {
       console.error('Failed to update course status:', error);
       alert('Failed to update course status. Please try again.');
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Get current courses for the page
+  const indexOfLastCourse = currentPage * coursesPerPage;
+  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
+  const currentCourses = allCourses.slice(indexOfFirstCourse, indexOfLastCourse);
+  const totalPages = Math.ceil(allCourses.length / coursesPerPage);
+
+  // Pagination controls
+  const renderPagination = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`mx-1 px-3 py-1 rounded ${
+            currentPage === i 
+              ? 'bg-blue-600 text-white' 
+              : 'bg-white text-blue-600 hover:bg-blue-100'
+          }`}
+        >
+          {i}
+        </button>
+      );
+    }
+    return (
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="mx-1 px-3 py-1 rounded bg-white text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+        >
+          &laquo;
+        </button>
+        {pages}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="mx-1 px-3 py-1 rounded bg-white text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+        >
+          &raquo;
+        </button>
+      </div>
+    );
+  };
+
+  // Format date to readable format
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
   };
 
   return (
@@ -141,7 +216,7 @@ const InstructorCourses: React.FC = () => {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             </div>
-          ) : courses.length === 0 ? (
+          ) : allCourses.length === 0 ? (
             <div className="text-center py-12 px-6">
               <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -169,13 +244,13 @@ const InstructorCourses: React.FC = () => {
                       Course
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Students
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -183,7 +258,7 @@ const InstructorCourses: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {courses.map((course) => (
+                  {currentCourses.map((course) => (
                     <tr key={course.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -205,6 +280,9 @@ const InstructorCourses: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{formatDate(course.createdAt)}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{course.enrollments?.length || 0} students</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -216,41 +294,61 @@ const InstructorCourses: React.FC = () => {
                           {course.isPublished ? 'Published' : 'Draft'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${course.price.toFixed(2)}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <button 
-                            onClick={() => handleToggleStatus(course.id, course.isPublished)}
-                            className={`${
+                            onClick={() => handleToggleStatus(course.id, course)}
+                            className={`inline-flex items-center px-2.5 py-1.5 border rounded-md text-xs font-medium ${
                               course.isPublished 
-                                ? 'text-yellow-600 hover:text-yellow-900' 
-                                : 'text-green-600 hover:text-green-900'
-                            } focus:outline-none`}
+                                ? 'border-yellow-300 bg-yellow-50 text-yellow-800 hover:bg-yellow-100' 
+                                : 'border-green-300 bg-green-50 text-green-800 hover:bg-green-100'
+                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                             title={course.isPublished ? 'Unpublish' : 'Publish'}
                           >
-                            {course.isPublished ? 'Unpublish' : 'Publish'}
+                            {course.isPublished ? (
+                              <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                                Unpublish
+                              </>
+                            ) : (
+                              <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Publish
+                              </>
+                            )}
                           </button>
                           <button 
                             onClick={() => handleEditCourse(course.id)}
-                            className="text-blue-600 hover:text-blue-900 focus:outline-none"
+                            className="inline-flex items-center px-2.5 py-1.5 border border-blue-300 bg-blue-50 text-blue-800 rounded-md text-xs font-medium hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             title="Edit course"
                           >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
                             Edit
                           </button>
                           <button 
                             onClick={() => handleManageLessons(course.id)}
-                            className="text-indigo-600 hover:text-indigo-900 focus:outline-none"
+                            className="inline-flex items-center px-2.5 py-1.5 border border-indigo-300 bg-indigo-50 text-indigo-800 rounded-md text-xs font-medium hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             title="Manage lessons"
                           >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
                             Lessons
                           </button>
                           <button 
                             onClick={() => handleDeleteCourse(course.id)}
-                            className="text-red-600 hover:text-red-900 focus:outline-none"
+                            className="inline-flex items-center px-2.5 py-1.5 border border-red-300 bg-red-50 text-red-800 rounded-md text-xs font-medium hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                             title="Delete course"
                           >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                             Delete
                           </button>
                         </div>
@@ -259,6 +357,16 @@ const InstructorCourses: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          
+          {/* Pagination */}
+          {!isLoading && allCourses.length > 0 && totalPages > 1 && renderPagination()}
+          
+          {/* Course count indicator */}
+          {!isLoading && allCourses.length > 0 && (
+            <div className="mt-4 pb-4 text-center text-sm text-gray-500">
+              Showing {currentCourses.length} of {allCourses.length} courses
             </div>
           )}
         </div>

@@ -64,10 +64,10 @@ API.interceptors.response.use(
 
 // Course API methods
 export const CourseAPI = {
-  // Get all courses
+  // Get all courses without pagination
   getAllCourses: async (): Promise<ApiResponse<Course[]>> => {
     try {
-      const response = await API.get('/api/Courses');
+      const response = await API.get(`/api/Courses`);
       return response.data;
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -80,20 +80,15 @@ export const CourseAPI = {
     }
   },
   
-  // Search courses
-  searchCourses: async (searchTerm: string, category?: string, level?: string): Promise<ApiResponse<Course[]>> => {
+  // Search courses (client-side filtering should be implemented instead)
+  searchCourses: async (
+    searchTerm: string, 
+    category?: string, 
+    level?: string
+  ): Promise<ApiResponse<Course[]>> => {
     try {
-      let url = `/api/Courses/search?term=${encodeURIComponent(searchTerm)}`;
-      
-      if (category) {
-        url += `&category=${encodeURIComponent(category)}`;
-      }
-      
-      if (level) {
-        url += `&level=${encodeURIComponent(level)}`;
-      }
-      
-      const response = await API.get(url);
+      // Simple GET request to fetch all courses, filtering will be done client-side
+      const response = await API.get('/api/Courses');
       return response.data;
     } catch (error) {
       console.error('Error searching courses:', error);

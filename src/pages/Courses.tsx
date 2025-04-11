@@ -12,7 +12,10 @@ const Courses: React.FC = () => {
   const [selectedLevel, setSelectedLevel] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
   const [levels, setLevels] = useState<string[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 9;
 
   useEffect(() => {
     fetchCourses();
@@ -47,76 +50,26 @@ const Courses: React.FC = () => {
     }
   };
 
-  // Debounced search - only search when user stops typing for 500ms
+  // Client-side filtering
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchTerm || selectedCategory || selectedLevel) {
-        searchCourses();
-      } else {
-        // If no search criteria, show all courses
-        setFilteredCourses(courses);
-      }
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedCategory, selectedLevel]);
-
-  const searchCourses = async () => {
-    // Only call API if search term exists, otherwise filter locally
-    if (searchTerm.length > 2) {
-      setIsSearching(true);
-      try {
-        const response = await CourseAPI.searchCourses(
-          searchTerm, 
-          selectedCategory, 
-          selectedLevel
-        );
+    if (searchTerm || selectedCategory || selectedLevel) {
+      const filtered = courses.filter(course => {
+        const matchesSearch = searchTerm === '' || 
+          course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.description.toLowerCase().includes(searchTerm.toLowerCase());
         
-        if (response.isSuccess && response.data) {
-          const publishedCourses = response.data.filter(course => course.isPublished);
-          setFilteredCourses(publishedCourses);
-        } else {
-          console.error('Search failed:', response.message);
-          // Fall back to local filtering if API search fails
-          filterCoursesLocally();
-        }
-      } catch (error) {
-        console.error('Error searching courses:', error);
-        // Fall back to local filtering if API search fails
-        filterCoursesLocally();
-      } finally {
-        setIsSearching(false);
-      }
+        const matchesCategory = selectedCategory === '' || course.category === selectedCategory;
+        const matchesLevel = selectedLevel === '' || course.level === selectedLevel;
+        
+        return matchesSearch && matchesCategory && matchesLevel;
+      });
+      
+      setFilteredCourses(filtered);
+      setCurrentPage(1); // Reset to first page on new filter
     } else {
-      // For short search terms, filter locally
-      filterCoursesLocally();
+      setFilteredCourses(courses);
     }
-  };
-
-  const filterCoursesLocally = () => {
-    let filtered = [...courses];
-    
-    // Filter by search term
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(course => 
-        course.title.toLowerCase().includes(search) || 
-        course.description.toLowerCase().includes(search)
-      );
-    }
-    
-    // Filter by category
-    if (selectedCategory) {
-      filtered = filtered.filter(course => course.category === selectedCategory);
-    }
-    
-    // Filter by level
-    if (selectedLevel) {
-      filtered = filtered.filter(course => course.level === selectedLevel);
-    }
-    
-    setFilteredCourses(filtered);
-  };
+  }, [searchTerm, selectedCategory, selectedLevel, courses]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -134,7 +87,118 @@ const Courses: React.FC = () => {
     setSearchTerm('');
     setSelectedCategory('');
     setSelectedLevel('');
-    setFilteredCourses(courses);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Get current page of courses
+  const indexOfLastCourse = currentPage * coursesPerPage;
+  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
+  const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
+  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
+
+  // Generate pagination buttons
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisibleButtons = 5;
+    
+    // Previous button
+    buttons.push(
+      <button
+        key="prev"
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        &laquo;
+      </button>
+    );
+    
+    // Calculate range of page numbers to display
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisibleButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
+    
+    // Adjust if we're at the end of the range
+    if (endPage - startPage + 1 < maxVisibleButtons) {
+      startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+    }
+    
+    // First page button if not visible
+    if (startPage > 1) {
+      buttons.push(
+        <button
+          key="first"
+          onClick={() => handlePageChange(1)}
+          className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+        >
+          1
+        </button>
+      );
+      
+      // Ellipsis if needed
+      if (startPage > 2) {
+        buttons.push(
+          <span key="ellipsis1" className="px-3 py-1">
+            ...
+          </span>
+        );
+      }
+    }
+    
+    // Page number buttons
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-3 py-1 rounded-md ${
+            i === currentPage
+              ? 'bg-blue-600 text-white'
+              : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {i}
+        </button>
+      );
+    }
+    
+    // Last page button if not visible
+    if (endPage < totalPages) {
+      // Ellipsis if needed
+      if (endPage < totalPages - 1) {
+        buttons.push(
+          <span key="ellipsis2" className="px-3 py-1">
+            ...
+          </span>
+        );
+      }
+      
+      buttons.push(
+        <button
+          key="last"
+          onClick={() => handlePageChange(totalPages)}
+          className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+        >
+          {totalPages}
+        </button>
+      );
+    }
+    
+    // Next button
+    buttons.push(
+      <button
+        key="next"
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        &raquo;
+      </button>
+    );
+    
+    return buttons;
   };
 
   return (
@@ -158,72 +222,60 @@ const Courses: React.FC = () => {
         )}
         
         {/* Search and Filters */}
-        <div className="bg-white shadow-sm rounded-lg p-6 mb-8">
-          <div className="mb-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-              </div>
+        <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="md:col-span-2">
+              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">Search</label>
               <input
-                type="search"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                type="text"
+                id="search"
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Search for courses..."
                 value={searchTerm}
                 onChange={handleSearch}
               />
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
               <select
                 id="category"
-                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 value={selectedCategory}
                 onChange={handleCategoryChange}
               >
                 <option value="">All Categories</option>
-                {categories.map((category, index) => (
-                  <option key={index} value={category}>{category}</option>
+                {categories.map(category => (
+                  <option key={category} value={category}>{category}</option>
                 ))}
               </select>
             </div>
-            
             <div>
-              <label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-1">
-                Level
-              </label>
+              <label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-1">Level</label>
               <select
                 id="level"
-                className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 value={selectedLevel}
                 onChange={handleLevelChange}
               >
                 <option value="">All Levels</option>
-                {levels.map((level, index) => (
-                  <option key={index} value={level}>{level}</option>
+                {levels.map(level => (
+                  <option key={level} value={level}>{level}</option>
                 ))}
               </select>
             </div>
-            
-            <div className="flex items-end">
-              <button
-                onClick={resetFilters}
-                className="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-              >
-                Reset Filters
-              </button>
-            </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={resetFilters}
+              className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Reset Filters
+            </button>
           </div>
         </div>
         
         {/* Course Listings */}
-        {isLoading || isSearching ? (
+        {isLoading ? (
           <div className="flex justify-center py-12">
             <svg className="animate-spin h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -238,49 +290,65 @@ const Courses: React.FC = () => {
             <h3 className="mt-2 text-lg font-medium text-gray-900">No courses found</h3>
             <p className="mt-1 text-gray-500">Try adjusting your search or filter criteria.</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map(course => (
-              <div key={course.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                <div className="aspect-video bg-gray-200 relative">
-                  {course.thumbnailUrl ? (
-                    <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
+        ) :
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentCourses.map(course => (
+                <div key={course.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div className="aspect-video bg-gray-200 relative">
+                    {course.thumbnailUrl ? (
+                      <img src={course.thumbnailUrl} alt={course.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2">
+                      <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                        {course.level}
+                      </span>
                     </div>
-                  )}
-                  <div className="absolute top-2 right-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                      {course.level}
-                    </span>
+                  </div>
+                  <div className="p-5">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600">{course.title}</h3>
+                      <span className="text-lg font-bold text-blue-600">${course.price.toFixed(2)}</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-2 line-clamp-2">{course.description}</p>
+                    <div className="flex items-center mb-4">
+                      <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">{course.category}</span>
+                      {course.instructor && (
+                        <span className="text-xs text-gray-500 ml-2">by {course.instructor.firstName} {course.instructor.lastName}</span>
+                      )}
+                    </div>
+                    <Link
+                      to={`/courses/${course.id}`}
+                      className="block w-full text-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      View Course
+                    </Link>
                   </div>
                 </div>
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600">{course.title}</h3>
-                    <span className="text-lg font-bold text-blue-600">${course.price.toFixed(2)}</span>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-2 line-clamp-2">{course.description}</p>
-                  <div className="flex items-center mb-4">
-                    <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full">{course.category}</span>
-                    {course.instructor && (
-                      <span className="text-xs text-gray-500 ml-2">by {course.instructor.firstName} {course.instructor.lastName}</span>
-                    )}
-                  </div>
-                  <Link
-                    to={`/courses/${course.id}`}
-                    className="block w-full text-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    View Course
-                  </Link>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex justify-center">
+                <div className="flex space-x-1">
+                  {renderPaginationButtons()}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            )}
+            
+            {/* Results count */}
+            <div className="mt-4 text-center text-sm text-gray-500">
+              Showing {currentCourses.length} of {filteredCourses.length} courses
+            </div>
+          </>
+        }
       </div>
     </div>
   );
