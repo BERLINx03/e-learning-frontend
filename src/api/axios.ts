@@ -18,7 +18,7 @@ export interface User {
   createdAt: string;
   lastLogin: string;
   isActive: boolean;
-  role: string;
+  role: "student" | "instructor" | "admin";
   timeoutUntil?: string;
   profilePictureUrl?: string;
   bio?: string;
@@ -152,6 +152,14 @@ API.interceptors.response.use(
   }
 );
 
+interface UpdateProfileRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  bio: string;
+  profilePictureUrl: string;
+}
+
 // Course API methods
 export const CourseAPI = {
   // Get all courses without pagination
@@ -270,6 +278,95 @@ export const CourseAPI = {
     } catch (error) {
       console.error('Failed to mark message as read:', error);
       throw error;
+    }
+  },
+
+  updateProfile: async (data: UpdateProfileRequest): Promise<ApiResponse> => {
+    try {
+      const response = await API.put('/api/Users/profile', data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return error.response.data as ApiResponse;
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while updating profile',
+        statusCode: 500
+      };
+    }
+  },
+
+  getProfile: async (): Promise<ApiResponse<User>> => {
+    try {
+      const response = await API.get('/api/Users/profile');
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return error.response.data as ApiResponse<User>;
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while fetching profile',
+        statusCode: 500,
+        data: undefined
+      };
+    }
+  }
+};
+
+export const UserAPI = {
+  async getProfile(): Promise<ApiResponse<User>> {
+    try {
+      const response = await API.get('/api/Users/profile');
+      return {
+        isSuccess: true,
+        message: 'Profile fetched successfully',
+        data: response.data,
+        statusCode: response.status
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          isSuccess: false,
+          message: error.response?.data?.message || 'Failed to fetch profile',
+          statusCode: error.response?.status || 500,
+          data: undefined
+        };
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while fetching profile',
+        statusCode: 500,
+        data: undefined
+      };
+    }
+  },
+
+  async updateProfile(data: Partial<User>): Promise<ApiResponse<User>> {
+    try {
+      const response = await API.put('/api/Users/profile', data);
+      return {
+        isSuccess: true,
+        message: 'Profile updated successfully',
+        data: response.data,
+        statusCode: response.status
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          isSuccess: false,
+          message: error.response?.data?.message || 'Failed to update profile',
+          statusCode: error.response?.status || 500,
+          data: undefined
+        };
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while updating profile',
+        statusCode: 500,
+        data: undefined
+      };
     }
   }
 };

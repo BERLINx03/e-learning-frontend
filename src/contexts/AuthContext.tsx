@@ -34,6 +34,7 @@ interface LoginResponse {
 
 type AuthContextType = {
   user: User | null;
+  updateUser: (user: User) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<LoginResponse>;
@@ -199,8 +200,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
   };
 
+  const updateUser = (user: User) => {
+    setUser(user);
+  };
+
   const value = {
     user,
+    updateUser,
     isAuthenticated: !!user,
     isLoading,
     login,
