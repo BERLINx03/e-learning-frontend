@@ -1,46 +1,118 @@
-# Getting Started with Create React App
+# E-Learning Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, responsive e-learning platform built with React, TypeScript, and Tailwind CSS that connects students with instructors in a seamless online learning environment.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+### Authentication & User Management
 
-### `npm start`
+- Secure user authentication with JWT
+- Role-based access control (Student, Instructor, Admin)
+- User profile management
+- Password management
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### For Students
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Browse available courses
+- Enroll in courses
+- Track learning progress
+- Access course materials
 
-### `npm test`
+### For Instructors
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Comprehensive dashboard with statistics
+- Course management (create, edit, delete)
+- Lesson management
+- Student progress tracking
+- Profile settings
 
-### `npm run build`
+## Technology Stack
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **State Management**: React Context API
+- **Routing**: React Router v6
+- **HTTP Client**: Axios
+- **UI Components**: Custom components with Tailwind
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## API Integration
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The frontend connects to a RESTful API with these endpoints:
 
-### `npm run eject`
+### Authentication
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- POST `/api/Users/login` - User login
+- POST `/api/Users/register/student` - Register as student
+- POST `/api/Users/register/instructor` - Register as instructor
+- GET `/api/Users/profile` - Get user profile
+- PUT `/api/Users/profile` - Update user profile
+- PUT `/api/Users/change-password` - Change password
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Courses
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- GET `/api/Courses` - Get all courses
+- POST `/api/Courses` - Create new course
+- GET `/api/Courses/{id}` - Get course details
+- PUT `/api/Courses/{id}` - Update course
+- DELETE `/api/Courses/{id}` - Delete course
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Lessons
 
-## Learn More
+- GET `/api/Lessons/course/{courseId}` - Get lessons for a course
+- POST `/api/Lessons` - Create new lesson
+- GET `/api/Lessons/{id}` - Get lesson details
+- PUT `/api/Lessons/{id}` - Update lesson
+- DELETE `/api/Lessons/{id}` - Delete lesson
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Progress Tracking
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- GET `/api/Lessons/course/{courseId}/progress` - Get course progress
+- GET `/api/Lessons/{lessonId}/progress` - Get lesson progress
+
+## Installation
+
+1. Clone the repository
+
+   ```
+   git clone https://github.com/yourusername/e-learning-platform.git
+   cd e-learning-platform
+   ```
+
+2. Install dependencies
+
+   ```
+   npm install
+   ```
+
+3. Configure the API endpoint
+   Update the `baseURL` in `src/api/axios.ts` to point to your backend server
+
+4. Start the development server
+   ```
+   npm start
+   ```
+
+## Project Structure
+
+```
+src/
+├── api/             # API configuration and axios setup
+├── components/      # Reusable UI components
+├── contexts/        # React Context for state management
+├── pages/           # Page components
+│   ├── auth/        # Authentication pages (login, register)
+│   ├── instructor/  # Instructor-specific pages
+│   └── student/     # Student-specific pages
+└── types/           # TypeScript type definitions
+```
+
+## Features in Development
+
+- Quiz and assessment system
+- Discussion forums
+- Real-time notifications
+- Video conferencing integration
+- Payment processing for course enrollment
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
