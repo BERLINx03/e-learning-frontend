@@ -165,7 +165,8 @@ const CourseForm: React.FC = () => {
     try {
       const instructorId = typeof user?.id === 'string' ? parseInt(user.id, 10) : user?.id;
 
-      const payload = {
+      // Prepare the payload with only the required fields for the API
+      const basePayload = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
@@ -175,30 +176,54 @@ const CourseForm: React.FC = () => {
         thisCourseInclude: formData.thisCourseInclude.filter(item => item.trim() !== ''),
         duration: formData.duration,
         price: formData.price,
-        thumbnailUrl: formData.thumbnailUrl,
-        instructorId,
+        thumbnailUrl: formData.thumbnailUrl || '',
         isPublished: formData.isPublished
       };
 
       let response: ApiResponse<Course>;
       
+      console.log(`${isEditMode ? 'Updating' : 'Creating'} course with data:`, basePayload);
+      
       if (isEditMode) {
-        response = await CourseAPI.updateCourse(courseId as string, payload);
+        // For edit mode, don't include instructorId in the payload
+        response = await CourseAPI.updateCourse(courseId as string, basePayload);
       } else {
-        response = await CourseAPI.createCourse(payload);
+        // For create mode, include instructorId
+        const createPayload = {
+          ...basePayload,
+          instructorId
+        };
+        response = await CourseAPI.createCourse(createPayload);
       }
+
+      console.log('API response:', response);
 
       if (response.isSuccess) {
         navigate('/instructor/courses');
       } else {
-        setError(response.message || 'Failed to save course.');
+        setError(response.message || `Failed to ${isEditMode ? 'update' : 'create'} course.`);
         if (response.errors && response.errors.length > 0) {
-          setValidationErrors(response.errors);
+          setValidationErrors(response.errors.filter(e => e)); // Filter out empty error messages
         }
       }
-    } catch (error) {
-      console.error('Failed to save course:', error);
-      setError('Failed to save course. Please check your inputs and try again.');
+    } catch (error: any) {
+      console.error(`Failed to ${isEditMode ? 'update' : 'create'} course:`, error);
+      
+      // Enhanced error handling
+      let errorMessage = `Failed to ${isEditMode ? 'update' : 'create'} course. `;
+      
+      if (error.response) {
+        errorMessage += `Server returned: ${error.response.data?.message || error.response.statusText || error.message}`;
+        if (error.response.data?.errors?.length) {
+          setValidationErrors(error.response.data.errors);
+        }
+      } else if (error.request) {
+        errorMessage += 'No response received from server. Please check your network connection.';
+      } else {
+        errorMessage += error.message || 'Unknown error occurred.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }
