@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { CourseAPI } from '../api/axios';
+import { toast } from 'react-hot-toast';
 
 // Types
 interface User {
@@ -108,6 +109,16 @@ interface Course {
   messages?: CourseMessage[];
 }
 
+interface EditCourseData {
+  title: string;
+  description: string;
+  category: string;
+  level: string;
+  price: number;
+  isPublished: boolean;
+  // Remove thumbnailUrl from here since we'll use the dedicated endpoint
+}
+
 const CourseDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -120,6 +131,11 @@ const CourseDetails: React.FC = () => {
     thumbnail: false,
     [`instructor-${course?.instructor?.id}`]: false,
   });
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editData, setEditData] = useState<EditCourseData | null>(null);
 
   useEffect(() => {
     fetchCourseDetails();
@@ -205,6 +221,71 @@ const CourseDetails: React.FC = () => {
       ...prev,
       [key]: true
     }));
+  };
+
+  // Add a function to handle thumbnail file selection
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setThumbnailFile(e.target.files[0]);
+    }
+  };
+
+  // Add a function to upload the thumbnail
+  const uploadThumbnail = async () => {
+    if (!thumbnailFile || !course) return;
+    
+    try {
+      setIsUploadingThumbnail(true);
+      const response = await CourseAPI.uploadThumbnail(course.id, thumbnailFile);
+      
+      if (response.isSuccess && response.data) {
+        // Update the local course data with the new thumbnail URL
+        setCourse(prev => prev ? { ...prev, thumbnailUrl: response.data } : null);
+        setThumbnailFile(null);
+        toast.success('Thumbnail updated successfully!');
+      } else {
+        toast.error(response.message || 'Failed to update thumbnail');
+      }
+    } catch (error) {
+      console.error('Error uploading thumbnail:', error);
+      toast.error('Failed to upload thumbnail. Please try again.');
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  };
+
+  // Update the handleSaveChanges function
+  const handleSaveChanges = async () => {
+    if (!course || !editData) return;
+    
+    try {
+      setSaving(true);
+      
+      const updatedCourse = {
+        ...editData
+        // Note: We're no longer sending thumbnailUrl here
+      };
+      
+      const response = await CourseAPI.updateCourse(course.id, updatedCourse);
+      
+      if (response.isSuccess) {
+        // If we also need to upload a thumbnail
+        if (thumbnailFile) {
+          await uploadThumbnail();
+        }
+        
+        setCourse(prev => prev ? { ...prev, ...updatedCourse } : null);
+        setEditing(false);
+        toast.success('Course updated successfully!');
+      } else {
+        toast.error(response.message || 'Failed to update course');
+      }
+    } catch (error) {
+      console.error('Error updating course:', error);
+      toast.error('Failed to update course. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -377,7 +458,6 @@ const CourseDetails: React.FC = () => {
                                 thisCourseInclude: course.thisCourseInclude,
                                 duration: course.duration,
                                 price: course.price,
-                                thumbnailUrl: course.thumbnailUrl || '',
                                 isPublished: !course.isPublished
                               };
                               
@@ -603,6 +683,77 @@ const CourseDetails: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Course thumbnail section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Course Thumbnail</h3>
+          
+          <div className="flex items-start">
+            {!imageErrors.thumbnail && (course?.thumbnailUrl || thumbnailFile) ? (
+              <div className="relative w-40 h-24 rounded-md overflow-hidden">
+                <img
+                  src={thumbnailFile ? URL.createObjectURL(thumbnailFile) : course?.thumbnailUrl}
+                  alt={course?.title}
+                  className="w-full h-full object-cover"
+                  onError={() => handleImageError('thumbnail')}
+                />
+              </div>
+            ) : (
+              <div className="w-40 h-24 bg-gray-200 flex items-center justify-center rounded-md">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            )}
+            
+            <div className="ml-4 flex-1">
+              {editing ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Update Thumbnail
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailChange}
+                    className="block w-full text-sm text-gray-500
+                             file:mr-4 file:py-2 file:px-4
+                             file:rounded-md file:border-0
+                             file:text-sm file:font-semibold
+                             file:bg-blue-50 file:text-blue-700
+                             hover:file:bg-blue-100"
+                  />
+                  {thumbnailFile && (
+                    <button
+                      type="button"
+                      onClick={uploadThumbnail}
+                      disabled={isUploadingThumbnail}
+                      className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      {isUploadingThumbnail ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Uploading...
+                        </>
+                      ) : (
+                        'Upload Now'
+                      )}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  {course?.thumbnailUrl 
+                    ? 'This is the current thumbnail for your course. You can change it by editing the course.'
+                    : 'This course has no thumbnail image. Add one by editing the course.'}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

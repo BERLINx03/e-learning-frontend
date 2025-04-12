@@ -248,6 +248,29 @@ export const CourseAPI = {
     }
   },
 
+  // Upload course thumbnail
+  uploadThumbnail: async (courseId: number | string, thumbnailFile: File): Promise<ApiResponse<string>> => {
+    try {
+      const formData = new FormData();
+      formData.append('thumbnail', thumbnailFile);
+      
+      // For FormData, we need to override the Content-Type to undefined so the browser sets it with the boundary
+      const response = await API.put<ApiResponse<string>>(
+        `/api/Courses/${courseId}/thumbnail`, 
+        formData,
+        {
+          headers: {
+            'Content-Type': undefined,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to upload thumbnail for course ${courseId}:`, error);
+      throw error;
+    }
+  },
+
   // Send a message in a course
   sendCourseMessage: async (courseId: number, data: { message: string }): Promise<ApiResponse<CourseMessage>> => {
     try {

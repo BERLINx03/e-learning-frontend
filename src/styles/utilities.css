@@ -1,0 +1,98 @@
+/**
+ * Additional utility classes to ensure proper text rendering in all themes
+ */
+
+/* Fix input text colors */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+input[type="time"],
+input[type="color"],
+select,
+textarea {
+  color: var(--text-primary) !important;
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+}
+
+/* Ensure placeholder text is visible */
+::placeholder {
+  color: var(--text-secondary) !important;
+  opacity: 0.7;
+}
+
+/* Ensure buttons have proper text contrast */
+button, 
+.btn,
+[type="button"],
+[type="submit"],
+[type="reset"] {
+  color: inherit;
+}
+
+/* Specific button styles */
+.btn-primary,
+.bg-accent {
+  color: white !important;
+}
+
+/* Ensure list items inherit text color */
+li {
+  color: inherit;
+}
+
+/* Fix SVG colors in different themes */
+svg {
+  fill: currentColor;
+}
+
+/* Card text color inheritance */
+.bg-card * {
+  color: inherit;
+}
+
+/* Table text colors */
+th, td {
+  color: inherit;
+}
+
+/* Specific text color overrides for theme-dark and theme-onyx */
+.theme-dark .text-white,
+.theme-onyx .text-white {
+  color: #ffffff !important;
+}
+
+/* Force text color for specific elements if needed */
+.force-text-primary {
+  color: var(--text-primary) !important;
+}
+
+.force-text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.force-text-accent {
+  color: var(--accent-color) !important;
+}
+
+.force-text-white {
+  color: #ffffff !important;
+}
+
+/* Fix headings */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+}
+
+/* Fix paragraphs */
+p {
+  color: var(--text-primary);
+} 

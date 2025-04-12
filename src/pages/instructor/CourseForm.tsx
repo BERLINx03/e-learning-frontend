@@ -74,6 +74,9 @@ const CourseForm: React.FC = () => {
     thumbnailUrl: '',
     isPublished: false
   });
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string>('');
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   useEffect(() => {
     // If in edit mode, fetch the course data
@@ -156,6 +159,39 @@ const CourseForm: React.FC = () => {
     }));
   };
 
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setThumbnailFile(file);
+      
+      // Create a preview URL for the image
+      const previewUrl = URL.createObjectURL(file);
+      setThumbnailPreviewUrl(previewUrl);
+    }
+  };
+
+  const uploadThumbnail = async (courseId: number | string): Promise<string | null> => {
+    if (!thumbnailFile) return null;
+    
+    try {
+      setIsUploading(true);
+      const response = await CourseAPI.uploadThumbnail(courseId, thumbnailFile);
+      
+      if (response.isSuccess && response.data) {
+        return response.data;
+      } else {
+        setError('Failed to upload thumbnail: ' + (response.message || 'Unknown error'));
+        return null;
+      }
+    } catch (error) {
+      console.error('Failed to upload thumbnail:', error);
+      setError('Failed to upload thumbnail. Please try again.');
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -175,7 +211,6 @@ const CourseForm: React.FC = () => {
         thisCourseInclude: formData.thisCourseInclude.filter(item => item.trim() !== ''),
         duration: formData.duration,
         price: formData.price,
-        thumbnailUrl: formData.thumbnailUrl,
         instructorId,
         isPublished: formData.isPublished
       };
@@ -188,14 +223,21 @@ const CourseForm: React.FC = () => {
         response = await CourseAPI.createCourse(payload);
       }
 
-      if (response.isSuccess) {
+      if (response.isSuccess && response.data) {
+        // If we have a thumbnail file, upload it after the course is created/updated
+        if (thumbnailFile) {
+          const uploadedThumbnailUrl = await uploadThumbnail(response.data.id);
+          if (uploadedThumbnailUrl) {
+            // We successfully uploaded the thumbnail, no need to do anything else
+            console.log('Thumbnail uploaded successfully:', uploadedThumbnailUrl);
+          }
+        }
         navigate('/instructor/courses');
       } else {
         setError(response.message || 'Failed to save course.');
         if (response.errors && response.errors.length > 0) {
           setValidationErrors(response.errors);
         }
-
       }
     } catch (error) {
       console.error('Failed to save course:', error);
@@ -489,37 +531,42 @@ const CourseForm: React.FC = () => {
           </div>
         </div>
 
-        <div>
-          <label htmlFor="thumbnailUrl" className="block text-sm font-medium text-gray-700">
-            Course Image URL
+        <div className="col-span-6">
+          <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700">
+            Course Thumbnail
           </label>
-          <input
-            type="url"
-            name="thumbnailUrl"
-            id="thumbnailUrl"
-            className="mt-1 block w-full px-3 py-2 rounded-lg border border-gray-300 bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
-            value={formData.thumbnailUrl}
-            onChange={handleInputChange}
-            placeholder="https://example.com/image.jpg"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Provide a URL for your course thumbnail image. Leave empty to use a default image.
+          <div className="mt-1 flex items-center">
+            {(thumbnailPreviewUrl || formData.thumbnailUrl) && (
+              <div className="relative w-32 h-32 mr-4 border border-gray-200 rounded-md overflow-hidden">
+                <img 
+                  src={thumbnailPreviewUrl || formData.thumbnailUrl} 
+                  alt="Course thumbnail preview" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <label className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              {thumbnailFile ? 'Change Thumbnail' : (formData.thumbnailUrl ? 'Replace Thumbnail' : 'Upload Thumbnail')}
+              <input 
+                type="file" 
+                id="thumbnail" 
+                name="thumbnail"
+                accept="image/*"
+                className="sr-only"
+                onChange={handleThumbnailChange}
+              />
+            </label>
+            {isUploading && (
+              <svg className="ml-3 animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
+          </div>
+          <p className="mt-2 text-sm text-gray-500">
+            Upload a high-quality image for your course thumbnail. Recommended size 16:9 ratio.
           </p>
         </div>
-
-        {formData.thumbnailUrl && (
-          <div className="border border-gray-200 rounded-md p-4 bg-gray-50">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Image Preview</label>
-            <div className="flex justify-center">
-              <img 
-                src={formData.thumbnailUrl} 
-                alt="Course preview" 
-                className="h-48 object-cover rounded-md border border-gray-300 shadow-sm"
-                onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Invalid+Image+URL'}
-              />
-            </div>
-          </div>
-        )}
 
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
