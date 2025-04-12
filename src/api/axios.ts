@@ -229,35 +229,10 @@ export const CourseAPI = {
   // Update a course
   updateCourse: async (courseId: number | string, courseData: Partial<Course>): Promise<ApiResponse<Course>> => {
     try {
-      console.log('Updating course with ID:', courseId);
-      
-      // Only include the specific properties required by the API
-      const updatePayload = {
-        title: courseData.title,
-        description: courseData.description,
-        category: courseData.category,
-        level: courseData.level,
-        language: courseData.language,
-        whatYouWillLearn: courseData.whatYouWillLearn,
-        thisCourseInclude: courseData.thisCourseInclude,
-        duration: courseData.duration,
-        price: courseData.price,
-        thumbnailUrl: courseData.thumbnailUrl || '',
-        isPublished: courseData.isPublished
-      };
-      
-      console.log('Sending course data:', JSON.stringify(updatePayload, null, 2));
-      
-      const response = await API.put<ApiResponse<Course>>(`/api/Courses/${courseId}`, updatePayload);
-      
-      console.log('Update response:', response.status, response.data);
+      const response = await API.put<ApiResponse<Course>>(`/api/Courses/${courseId}`, courseData);
       return response.data;
     } catch (error) {
       console.error(`Failed to update course with ID ${courseId}:`, error);
-      if (axios.isAxiosError(error) && error.response) {
-        console.error('Error response:', error.response.status, error.response.data);
-        return error.response.data as ApiResponse<Course>;
-      }
       throw error;
     }
   },

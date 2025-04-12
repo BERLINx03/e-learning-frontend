@@ -79,41 +79,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const fetchUserProfile = async () => {
     try {
       const response = await API.get('/api/Users/profile');
-      
-      // Get current role from localStorage or use default
-      const storedUserData = localStorage.getItem('userData');
-      let currentRole: 'student' | 'instructor' | 'admin' = 'student';
-      
-      if (storedUserData) {
-        try {
-          const parsedUserData = JSON.parse(storedUserData);
-          // Ensure role is one of the valid types
-          if (parsedUserData.role === 'student' || 
-              parsedUserData.role === 'instructor' || 
-              parsedUserData.role === 'admin') {
-            currentRole = parsedUserData.role;
-          }
-        } catch (e) {
-          console.error('Error parsing stored user data:', e);
-        }
-      }
-      
-      const userData: User = {
-        id: response.data.data.id,
-        username: response.data.data.username,
-        email: response.data.data.email,
-        firstName: response.data.data.firstName,
-        lastName: response.data.data.lastName,
-        profilePictureUrl: response.data.data.profilePictureUrl,
-        bio: response.data.data.bio,
-        role: currentRole
-      };
-      
-      setUser(userData);
+      setUser({
+        id: response.data.id,
+        username: response.data.username,
+        email: response.data.email,
+        firstName: response.data.firstName,
+        lastName: response.data.lastName,
+        profilePictureUrl: response.data.profilePictureUrl,
+        bio: response.data.bio,
+        role: response.data.role.toLowerCase()
+      });
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       localStorage.removeItem('token');
-      localStorage.removeItem('userData');
       delete API.defaults.headers.common['Authorization'];
     } finally {
       setIsLoading(false);
@@ -126,17 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (response.data.isSuccess) {
         const { token } = response.data.data;
-        
-        // Ensure role is one of the valid types
-        let userRole: 'student' | 'instructor' | 'admin' = 'student';
-        if (response.data.data.role) {
-          const roleValue = response.data.data.role.toLowerCase();
-          if (roleValue === 'student' || roleValue === 'instructor' || roleValue === 'admin') {
-            userRole = roleValue as 'student' | 'instructor' | 'admin';
-          }
-        }
-        
-        const userData: User = {
+        const userData = {
           id: response.data.data.user.id,
           username: response.data.data.user.username,
           email: response.data.data.user.email,
@@ -144,11 +112,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           lastName: response.data.data.user.lastName,
           profilePictureUrl: response.data.data.user.profilePictureUrl,
           bio: response.data.data.user.bio,
-          role: userRole
+          role: response.data.data.role.toLowerCase()
         };
         
         localStorage.setItem('token', token);
-        localStorage.setItem('userData', JSON.stringify(userData));
         API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         setUser(userData);
@@ -174,7 +141,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.data.isSuccess) {
         const { token, user } = response.data.data;
         
-        const userData: User = {
+        localStorage.setItem('token', token);
+        API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        setUser({
           id: user.id,
           username: user.username,
           email: user.email,
@@ -183,13 +153,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           profilePictureUrl: user.profilePictureUrl,
           bio: user.bio,
           role: 'student'
-        };
-        
-        localStorage.setItem('token', token);
-        localStorage.setItem('userData', JSON.stringify(userData));
-        API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        setUser(userData);
+        });
       }
     } catch (error) {
       console.error('Student registration failed:', error);
@@ -210,7 +174,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.data.isSuccess) {
         const { token, user } = response.data.data;
         
-        const userData: User = {
+        localStorage.setItem('token', token);
+        API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        
+        setUser({
           id: user.id,
           username: user.username,
           email: user.email,
@@ -219,13 +186,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           profilePictureUrl: user.profilePictureUrl,
           bio: user.bio,
           role: 'instructor'
-        };
-        
-        localStorage.setItem('token', token);
-        localStorage.setItem('userData', JSON.stringify(userData));
-        API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        setUser(userData);
+        });
       }
     } catch (error) {
       console.error('Instructor registration failed:', error);
@@ -235,7 +196,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('userData');
     delete API.defaults.headers.common['Authorization'];
     setUser(null);
   };

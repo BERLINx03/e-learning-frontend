@@ -1,3 +1,108 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Import theme styles */
+@import './styles/themes.css';
+@import './styles/utilities.css';
+@import './styles/global.css';
+
+@layer base {
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Apply text colors to HTML elements */
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+  }
+
+  p {
+    color: var(--text-primary);
+  }
+
+  a {
+    color: var(--accent-color);
+  }
+
+  /* Fix placeholder text color */
+  ::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+  }
+}
+
+/* Text color classes */
+.text-primary {
+  color: var(--text-primary) !important;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.text-accent {
+  color: var(--accent-color) !important;
+}
+
+.text-danger {
+  color: var(--danger-color) !important;
+}
+
+.text-success {
+  color: var(--success-color) !important;
+}
+
+.text-warning {
+  color: var(--warning-color) !important;
+}
+
+/* Background color classes */
+.bg-primary {
+  background-color: var(--bg-primary) !important;
+}
+
+.bg-secondary {
+  background-color: var(--bg-secondary) !important;
+}
+
+.bg-header {
+  background-color: var(--header-bg) !important;
+}
+
+.bg-card {
+  background-color: var(--card-bg) !important;
+}
+
+.bg-accent {
+  background-color: var(--accent-color) !important;
+}
+
+.bg-danger {
+  background-color: var(--danger-color) !important;
+}
+
+.bg-success {
+  background-color: var(--success-color) !important;
+}
+
+.bg-warning {
+  background-color: var(--warning-color) !important;
+}
+
+/* Border color classes */
+.border-accent {
+  border-color: var(--accent-color) !important;
+}
+
+.border-primary {
+  border-color: var(--border-color) !important;
+}
+
+/* Custom hover effect for theme toggle button */
+.theme-toggle:hover {
+  transform: rotate(15deg);
+  transition: transform 0.2s ease;
+}
