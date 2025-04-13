@@ -60,7 +60,17 @@ const Register: React.FC = () => {
       }
       navigate('/'); // Redirect to home page after registration
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to register');
+      console.error('Registration error:', err);
+      if (err.response?.data?.errors && err.response.data.errors.length > 0) {
+        // Display the first error if there are multiple
+        setError(err.response.data.errors[0]);
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError('Failed to register. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

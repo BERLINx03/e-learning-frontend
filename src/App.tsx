@@ -19,6 +19,7 @@ import InstructorDashboard from './pages/instructor/Dashboard';
 import InstructorCourses from './pages/instructor/Courses';
 import CourseForm from './pages/instructor/CourseForm';
 import LessonManagement from './pages/instructor/lessons/LessonManagement';
+import LessonDetails from './pages/lessons/LessonDetails';
 import Profile from './pages/Profile';
 import ProfileEdit from './pages/ProfileEdit';
 
@@ -62,6 +63,7 @@ function App() {
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/edit" element={<ProfileEdit />} />
                     <Route path="/settings" element={<div>Settings (Coming Soon)</div>} />
+                    <Route path="/lessons/:id" element={<LessonDetails />} />
                   </Route>
                   
                   {/* Student-only routes */}

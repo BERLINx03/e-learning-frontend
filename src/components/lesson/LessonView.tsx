@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lesson, CourseAPI } from '../../api/axios';
 import { toast } from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 
 interface LessonViewProps {
   lesson: Lesson | null;
@@ -52,6 +53,15 @@ const LessonView: React.FC<LessonViewProps> = ({ lesson, onLessonCompleted }) =>
       <div className="p-4 border-b border-gray-200">
         <h2 className="text-xl font-semibold text-color-primary">{lesson.title}</h2>
         <p className="text-sm text-color-secondary mt-1">{lesson.description}</p>
+        <Link 
+          to={`/lessons/${lesson.id}`} 
+          className="inline-flex items-center mt-2 text-color-accent text-sm hover:underline"
+        >
+          <span>View full lesson</span>
+          <svg className="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </Link>
       </div>
 
       <div className="p-4">

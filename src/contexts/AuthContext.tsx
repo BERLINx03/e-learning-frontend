@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import API from '../api/axios';
+import API, { UserAPI } from '../api/axios';
 
 interface User {
   id: string | number;
@@ -130,7 +130,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const registerStudent = async (firstName: string, lastName: string, username: string, email: string, password: string) => {
     try {
-      const response = await API.post('/api/Users/register/student', { 
+      const response = await UserAPI.registerStudent({ 
         firstName, 
         lastName, 
         username, 
@@ -138,8 +138,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password 
       });
       
-      if (response.data.isSuccess) {
-        const { token, user } = response.data.data;
+      if (response.isSuccess) {
+        const { token, user } = response.data;
         
         localStorage.setItem('token', token);
         API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -154,6 +154,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           bio: user.bio,
           role: 'student'
         });
+      } else {
+        throw new Error(response.message || 'Registration failed');
       }
     } catch (error) {
       console.error('Student registration failed:', error);
@@ -163,7 +165,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const registerInstructor = async (firstName: string, lastName: string, username: string, email: string, password: string) => {
     try {
-      const response = await API.post('/api/Users/register/instructor', { 
+      const response = await UserAPI.registerInstructor({ 
         firstName, 
         lastName, 
         username, 
@@ -171,8 +173,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password 
       });
       
-      if (response.data.isSuccess) {
-        const { token, user } = response.data.data;
+      if (response.isSuccess) {
+        const { token, user } = response.data;
         
         localStorage.setItem('token', token);
         API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -187,6 +189,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           bio: user.bio,
           role: 'instructor'
         });
+      } else {
+        throw new Error(response.message || 'Registration failed');
       }
     } catch (error) {
       console.error('Instructor registration failed:', error);

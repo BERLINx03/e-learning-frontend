@@ -452,6 +452,22 @@ export const CourseAPI = {
         statusCode: 500
       };
     }
+  },
+
+  // Get a specific lesson by ID
+  getLessonById: async (id: number): Promise<ApiResponse<Lesson>> => {
+    try {
+      const response = await API.get(`/api/Lessons/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching lesson ${id}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch lesson',
+        errors: ['Network error while fetching lesson'],
+        statusCode: 500
+      };
+    }
   }
 };
 
@@ -505,6 +521,66 @@ export const UserAPI = {
         isSuccess: false,
         message: 'An error occurred while updating profile',
         statusCode: 500,
+        data: undefined
+      };
+    }
+  },
+
+  async registerStudent(userData: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
+    password: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await API.post('/api/Users/register/student', userData);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          isSuccess: false,
+          message: error.response?.data?.message || 'Failed to register student',
+          statusCode: error.response?.status || 500,
+          errors: error.response?.data?.errors || ['An unknown error occurred'],
+          data: undefined
+        };
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while registering',
+        statusCode: 500,
+        errors: ['Registration service is unavailable'],
+        data: undefined
+      };
+    }
+  },
+
+  async registerInstructor(userData: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
+    password: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await API.post('/api/Users/register/instructor', userData);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          isSuccess: false,
+          message: error.response?.data?.message || 'Failed to register instructor',
+          statusCode: error.response?.status || 500,
+          errors: error.response?.data?.errors || ['An unknown error occurred'],
+          data: undefined
+        };
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while registering',
+        statusCode: 500,
+        errors: ['Registration service is unavailable'],
         data: undefined
       };
     }
