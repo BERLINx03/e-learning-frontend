@@ -107,6 +107,38 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
     }
   };
 
+  const handleUnenroll = async () => {
+    if (!user) {
+      toast.error('You need to be logged in to unenroll from a course');
+      return;
+    }
+
+    // Confirm before unenrolling
+    if (!window.confirm('Are you sure you want to unenroll from this course? Your progress may be lost.')) {
+      return;
+    }
+
+    try {
+      setEnrolling(true); // Reuse the same loading state
+      const response = await CourseAPI.unenrollFromCourse(courseId);
+      
+      if (response.isSuccess) {
+        toast.success('Successfully unenrolled from the course');
+        // Reset enrollment status
+        setEnrollmentStatus(null);
+        setHasAccess(false);
+        checkEnrollmentStatus(); // Refresh to update enrollment status
+      } else {
+        toast.error(response.message || 'Failed to unenroll from the course');
+      }
+    } catch (error) {
+      console.error('Error unenrolling from course:', error);
+      toast.error('An error occurred while unenrolling from the course');
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
   const handleLessonCompleted = () => {
     fetchLessons();
     checkEnrollmentStatus();
@@ -176,10 +208,21 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
         </div>
         <div className="lg:col-span-2">
           {isEnrolled ? (
-            <LessonView 
-              lesson={activeLesson} 
-              onLessonCompleted={handleLessonCompleted}
-            />
+            <>
+              <LessonView 
+                lesson={activeLesson} 
+                onLessonCompleted={handleLessonCompleted}
+              />
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={handleUnenroll}
+                  disabled={enrolling}
+                  className="text-sm text-red-500 hover:text-red-700 font-medium"
+                >
+                  {enrolling ? 'Processing...' : 'Unenroll from course'}
+                </button>
+              </div>
+            </>
           ) : (
             <div className="bg-card rounded-lg shadow-sm p-6">
               <div className="flex flex-col items-center justify-center py-8">

@@ -296,7 +296,7 @@ export const CourseAPI = {
   // Enroll in a course
   enrollInCourse: async (courseId: number): Promise<ApiResponse<Enrollment>> => {
     try {
-      const response = await API.post(`/api/Enrollments`, { courseId });
+      const response = await API.post(`/api/Courses/${courseId}/enroll`);
       return response.data;
     } catch (error) {
       console.error(`Error enrolling in course ${courseId}:`, error);
@@ -304,6 +304,22 @@ export const CourseAPI = {
         isSuccess: false,
         message: 'Failed to enroll in course',
         errors: ['Network error while enrolling in course'],
+        statusCode: 500
+      };
+    }
+  },
+
+  // Unenroll from a course
+  unenrollFromCourse: async (courseId: number): Promise<ApiResponse<null>> => {
+    try {
+      const response = await API.post(`/api/Courses/${courseId}/unenroll`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error unenrolling from course ${courseId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to unenroll from course',
+        errors: ['Network error while unenrolling from course'],
         statusCode: 500
       };
     }

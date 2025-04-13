@@ -352,6 +352,43 @@ const CourseDetails: React.FC = () => {
     }
   };
 
+  const handleUnenroll = async () => {
+    if (!user) {
+      toast.error('You need to be logged in to unenroll from a course');
+      return;
+    }
+
+    if (!course) {
+      toast.error('Course information not available');
+      return;
+    }
+
+    // Confirm before unenrolling
+    if (!window.confirm('Are you sure you want to unenroll from this course? Your progress may be lost.')) {
+      return;
+    }
+
+    try {
+      setEnrolling(true); // Reuse the same loading state
+      const response = await CourseAPI.unenrollFromCourse(course.id);
+      
+      if (response.isSuccess) {
+        toast.success('Successfully unenrolled from the course');
+        // Reset enrollment status
+        setEnrollmentStatus(null);
+        setHasAccess(false);
+        fetchCourseDetails(); // Refresh to update enrollment status
+      } else {
+        toast.error(response.message || 'Failed to unenroll from the course');
+      }
+    } catch (error) {
+      console.error('Error unenrolling from course:', error);
+      toast.error('An error occurred while unenrolling from the course');
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -666,7 +703,14 @@ const CourseDetails: React.FC = () => {
                 ></div>
               </div>
               
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-between items-center">
+                <button
+                  onClick={handleUnenroll}
+                  disabled={enrolling}
+                  className="text-sm text-red-500 hover:text-red-700 font-medium"
+                >
+                  {enrolling ? 'Processing...' : 'Unenroll from course'}
+                </button>
                 <Link
                   to="/my-courses"
                   className="text-sm text-accent hover:text-accent-hover"

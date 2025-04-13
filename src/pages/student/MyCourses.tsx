@@ -15,6 +15,7 @@ const MyCourses: React.FC = () => {
   const [courses, setCourses] = useState<CourseWithEnrollmentStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [processingCourseId, setProcessingCourseId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchMyCourses();
@@ -71,6 +72,34 @@ const MyCourses: React.FC = () => {
       toast.error('An error occurred while fetching your courses');
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleUnenroll = async (courseId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Confirm before unenrolling
+    if (!window.confirm('Are you sure you want to unenroll from this course? Your progress may be lost.')) {
+      return;
+    }
+    
+    try {
+      setProcessingCourseId(courseId);
+      const response = await CourseAPI.unenrollFromCourse(courseId);
+      
+      if (response.isSuccess) {
+        toast.success('Successfully unenrolled from the course');
+        // Remove the course from the local state or refetch all courses
+        fetchMyCourses();
+      } else {
+        toast.error(response.message || 'Failed to unenroll from the course');
+      }
+    } catch (error) {
+      console.error('Error unenrolling from course:', error);
+      toast.error('An error occurred while unenrolling from the course');
+    } finally {
+      setProcessingCourseId(null);
     }
   };
 
@@ -159,78 +188,81 @@ const MyCourses: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
-                <Link 
-                  key={course.id} 
-                  to={`/courses/${course.id}`}
+                <div 
+                  key={course.id}
                   className="group block bg-card rounded-lg overflow-hidden border border-primary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 >
-                  <div className="relative pb-[56.25%] bg-secondary overflow-hidden">
-                    {(() => {
-                      // Debug log outside the JSX tree
-                      console.log("Course thumbnail URL:", course.id, course.title, course.thumbnailUrl);
-                      
-                      if (course.thumbnailUrl && course.thumbnailUrl.length > 0) {
-                        return (
-                          <>
-                            <img 
-                              src={course.thumbnailUrl} 
-                              alt={course.title} 
-                              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                              onError={(e) => {
-                                // If image fails to load, replace with placeholder
-                                console.error(`Failed to load thumbnail: ${course.thumbnailUrl}`);
-                                const target = e.target as HTMLImageElement;
-                                target.onerror = null; // Prevent infinite callback loop
-                                // Don't use a relative path, use absolute URL for placeholder
-                                target.src = 'https://via.placeholder.com/640x360.png?text=Course+Image';
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                          </>
-                        );
-                      } else {
-                        return (
-                          <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${getCoursePlaceholderColor(course.title, course.id)}`}>
-                            <div className="text-center px-4">
-                              <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm mb-2">
-                                <span className="text-2xl font-bold text-white">
-                                  {course.title.charAt(0).toUpperCase()}
-                                </span>
+                  <Link to={`/courses/${course.id}`}>
+                    <div className="relative pb-[56.25%] bg-secondary overflow-hidden">
+                      {(() => {
+                        // Debug log outside the JSX tree
+                        console.log("Course thumbnail URL:", course.id, course.title, course.thumbnailUrl);
+                        
+                        if (course.thumbnailUrl && course.thumbnailUrl.length > 0) {
+                          return (
+                            <>
+                              <img 
+                                src={course.thumbnailUrl} 
+                                alt={course.title} 
+                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                onError={(e) => {
+                                  // If image fails to load, replace with placeholder
+                                  console.error(`Failed to load thumbnail: ${course.thumbnailUrl}`);
+                                  const target = e.target as HTMLImageElement;
+                                  target.onerror = null; // Prevent infinite callback loop
+                                  // Don't use a relative path, use absolute URL for placeholder
+                                  target.src = 'https://via.placeholder.com/640x360.png?text=Course+Image';
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            </>
+                          );
+                        } else {
+                          return (
+                            <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${getCoursePlaceholderColor(course.title, course.id)}`}>
+                              <div className="text-center px-4">
+                                <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm mb-2">
+                                  <span className="text-2xl font-bold text-white">
+                                    {course.title.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <p className="text-white font-medium text-sm line-clamp-2">
+                                  {course.title}
+                                </p>
+                                <p className="mt-1 text-xs text-gray-100">
+                                  {course.category} • {course.level}
+                                </p>
                               </div>
-                              <p className="text-white font-medium text-sm line-clamp-2">
-                                {course.title}
-                              </p>
-                              <p className="mt-1 text-xs text-gray-100">
-                                {course.category} • {course.level}
-                              </p>
                             </div>
+                          );
+                        }
+                      })()}
+                      
+                      {/* Access indicator */}
+                      {course.hasAccess !== undefined && (
+                        <div className="absolute bottom-0 left-0 right-0">
+                          <div className="h-1.5 bg-secondary">
+                            <div 
+                              className="h-1.5 bg-accent"
+                              style={{ 
+                                width: course.hasAccess ? '100%' : '0%'
+                              }}
+                            ></div>
                           </div>
-                        );
-                      }
-                    })()}
-                    
-                    {/* Access indicator */}
-                    {course.hasAccess !== undefined && (
-                      <div className="absolute bottom-0 left-0 right-0">
-                        <div className="h-1.5 bg-secondary">
-                          <div 
-                            className="h-1.5 bg-accent"
-                            style={{ 
-                              width: course.hasAccess ? '100%' : '0%'
-                            }}
-                          ></div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  </Link>
                   
                   <div className="p-5">
-                    <h3 className="text-lg font-semibold text-color-primary mb-2 line-clamp-2">
-                      {course.title}
-                    </h3>
-                    <div className="text-sm text-color-secondary mb-3">
-                      {course.category} • {course.level}
-                    </div>
+                    <Link to={`/courses/${course.id}`}>
+                      <h3 className="text-lg font-semibold text-color-primary mb-2 line-clamp-2">
+                        {course.title}
+                      </h3>
+                      <div className="text-sm text-color-secondary mb-3">
+                        {course.category} • {course.level}
+                      </div>
+                    </Link>
                     
                     {/* Access status */}
                     <div className="flex items-center justify-between mt-4">
@@ -245,34 +277,58 @@ const MyCourses: React.FC = () => {
                     </div>
                     
                     <div className="mt-4 pt-4 border-t border-primary">
-                      <Link
-                        to={
-                          course.lessons && course.lessons.length > 0 && course.hasAccess
-                            ? `/lessons/${course.lessons[0].id}`
-                            : `/courses/${course.id}`
-                        }
-                        className="w-full block text-center px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-hover transition-colors"
-                      >
-                        {course.hasAccess ? (
-                          <>
-                            <span>Continue Learning</span>
-                            <svg className="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                          </>
-                        ) : (
-                          <>
-                            <span>View Course</span>
-                            <svg className="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </>
+                      <div className="flex flex-col space-y-2">
+                        <Link
+                          to={
+                            course.lessons && course.lessons.length > 0 && course.hasAccess
+                              ? `/lessons/${course.lessons[0].id}`
+                              : `/courses/${course.id}`
+                          }
+                          className="w-full block text-center px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-hover transition-colors"
+                        >
+                          {course.hasAccess ? (
+                            <>
+                              <span>Continue Learning</span>
+                              <svg className="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                              </svg>
+                            </>
+                          ) : (
+                            <>
+                              <span>View Course</span>
+                              <svg className="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </>
+                          )}
+                        </Link>
+                        
+                        {course.hasAccess && (
+                          <button
+                            onClick={(e) => handleUnenroll(course.id, e)}
+                            disabled={processingCourseId === course.id}
+                            className="w-full text-center px-4 py-2 text-red-500 border border-red-500 rounded-md hover:bg-red-50 transition-colors"
+                          >
+                            {processingCourseId === course.id ? (
+                              <>
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <span>Unenroll</span>
+                              </>
+                            )}
+                          </button>
                         )}
-                      </Link>
+                      </div>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           </div>
