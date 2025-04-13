@@ -5,6 +5,8 @@
   --text-primary: #212529;
   --text-secondary: #6c757d;
   --accent-color: #3b82f6;
+  --accent-dark: #2563eb;
+  --accent-light: #93c5fd;
   --border-color: #e9ecef;
   --header-bg: #ffffff;
   --card-bg: #ffffff;
@@ -23,6 +25,8 @@
   --text-primary: #212529;
   --text-secondary: #6c757d;
   --accent-color: #3b82f6;
+  --accent-dark: #2563eb;
+  --accent-light: #93c5fd;
   --border-color: #e9ecef;
   --header-bg: #ffffff;
   --card-bg: #ffffff;
@@ -41,6 +45,8 @@
   --text-primary: #f9fafb;
   --text-secondary: #d1d5db;
   --accent-color: #60a5fa;
+  --accent-dark: #3b82f6;
+  --accent-light: #bfdbfe;
   --border-color: #374151;
   --header-bg: #111827;
   --card-bg: #1f2937;
@@ -59,6 +65,8 @@
   --text-primary: #ffffff;
   --text-secondary: #a0aec0;
   --accent-color: #60a5fa;
+  --accent-dark: #3b82f6;
+  --accent-light: #bfdbfe;
   --border-color: #2a2a2a;
   --header-bg: #000000;
   --card-bg: #121212;
