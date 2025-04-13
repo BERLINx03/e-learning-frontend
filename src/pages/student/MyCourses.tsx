@@ -132,41 +132,49 @@ const MyCourses: React.FC = () => {
                   className="group block bg-card rounded-lg overflow-hidden border border-primary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <div className="relative pb-[56.25%] bg-secondary overflow-hidden">
-                    {console.log("Course thumbnail URL:", course.id, course.title, course.thumbnailUrl)}
-                    {course.thumbnailUrl && course.thumbnailUrl.length > 0 ? (
-                      <>
-                        <img 
-                          src={course.thumbnailUrl} 
-                          alt={course.title} 
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          onError={(e) => {
-                            // If image fails to load, replace with placeholder
-                            console.error(`Failed to load thumbnail: ${course.thumbnailUrl}`);
-                            const target = e.target as HTMLImageElement;
-                            target.onerror = null; // Prevent infinite callback loop
-                            // Don't use a relative path, use absolute URL for placeholder
-                            target.src = 'https://via.placeholder.com/640x360.png?text=Course+Image';
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      </>
-                    ) : (
-                      <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${getCoursePlaceholderColor(course.title, course.id)}`}>
-                        <div className="text-center px-4">
-                          <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm mb-2">
-                            <span className="text-2xl font-bold text-white">
-                              {course.title.charAt(0).toUpperCase()}
-                            </span>
+                    {(() => {
+                      // Debug log outside the JSX tree
+                      console.log("Course thumbnail URL:", course.id, course.title, course.thumbnailUrl);
+                      
+                      if (course.thumbnailUrl && course.thumbnailUrl.length > 0) {
+                        return (
+                          <>
+                            <img 
+                              src={course.thumbnailUrl} 
+                              alt={course.title} 
+                              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              onError={(e) => {
+                                // If image fails to load, replace with placeholder
+                                console.error(`Failed to load thumbnail: ${course.thumbnailUrl}`);
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null; // Prevent infinite callback loop
+                                // Don't use a relative path, use absolute URL for placeholder
+                                target.src = 'https://via.placeholder.com/640x360.png?text=Course+Image';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          </>
+                        );
+                      } else {
+                        return (
+                          <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${getCoursePlaceholderColor(course.title, course.id)}`}>
+                            <div className="text-center px-4">
+                              <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm mb-2">
+                                <span className="text-2xl font-bold text-white">
+                                  {course.title.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <p className="text-white font-medium text-sm line-clamp-2">
+                                {course.title}
+                              </p>
+                              <p className="mt-1 text-xs text-gray-100">
+                                {course.category} • {course.level}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-white font-medium text-sm line-clamp-2">
-                            {course.title}
-                          </p>
-                          <p className="mt-1 text-xs text-gray-100">
-                            {course.category} • {course.level}
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                        );
+                      }
+                    })()}
                     
                     {/* Progress indicator */}
                     {course.enrollments && course.enrollments[0] && (
