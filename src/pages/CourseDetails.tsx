@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { CourseAPI } from '../api/axios';
 import { toast } from 'react-hot-toast';
 import CourseContent from '../components/lesson/CourseContent';
+import CourseStudents from '../components/course/CourseStudents';
 
 // Types
 interface User {
@@ -417,12 +418,12 @@ const CourseDetails: React.FC = () => {
               {/* Instructor Info */}
               <div className="flex items-start mt-6 bg-gray-800 rounded-lg p-6">
                 <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-purple-500">
-                  {course.instructor?.profilePictureUrl && !imageErrors[`instructor-${course.instructor?.id}`] ? (
+                  {!imageErrors[`instructor-${course.instructor?.id}`] && course.instructor?.profilePictureUrl ? (
                     <img
-                      src={course.instructor.profilePictureUrl}
-                      alt={`${course.instructor.firstName} ${course.instructor.lastName}`}
+                      src={course.instructor?.profilePictureUrl}
+                      alt={`${course.instructor?.firstName} ${course.instructor?.lastName}`}
                       className="w-full h-full object-cover"
-                      onError={() => handleImageError(`instructor-${course.instructor?.id}`)}
+                      onError={() => course.instructor && handleImageError(`instructor-${course.instructor.id}`)}
                     />
                   ) : (
                     <div className="w-full h-full bg-purple-100 flex items-center justify-center">
@@ -801,6 +802,66 @@ const CourseDetails: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {isInstructor && (
+          <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
+            <h2 className="text-2xl font-bold mb-4">Course Management</h2>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => navigate(`/instructor/courses/${course.id}/lessons`)}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <svg className="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Manage Lessons
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Students section - for instructors only */}
+        {isInstructor && (
+          <div className="mb-8">
+            <CourseStudents courseId={course.id} />
+          </div>
+        )}
+
+        {/* Instructor section */}
+        {course.instructor && (
+          <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
+            <h2 className="text-2xl font-bold mb-4">Instructor</h2>
+            <div className="flex items-start gap-4">
+              <div className="relative w-16 h-16 rounded-full overflow-hidden border border-gray-200">
+                {!imageErrors[`instructor-${course.instructor.id}`] && course.instructor.profilePictureUrl ? (
+                  <img
+                    src={course.instructor.profilePictureUrl}
+                    alt={`${course.instructor.firstName} ${course.instructor.lastName}`}
+                    className="w-full h-full object-cover"
+                    onError={() => course.instructor && handleImageError(`instructor-${course.instructor.id}`)}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-purple-100 flex items-center justify-center">
+                    <span className="text-lg font-medium text-purple-600">
+                      {course.instructor.firstName?.[0]}{course.instructor.lastName?.[0]}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">
+                  {course.instructor.firstName} {course.instructor.lastName}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Instructor
+                </p>
+                <p className="mt-2 text-sm text-gray-700">
+                  {course.instructor.bio || 'No bio provided by the instructor.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

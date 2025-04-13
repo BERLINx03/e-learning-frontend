@@ -468,6 +468,45 @@ export const CourseAPI = {
         statusCode: 500
       };
     }
+  },
+
+  // Add/upload a video to a lesson
+  addLessonVideo: async (lessonId: number, courseId: number, videoFile: File): Promise<ApiResponse<null>> => {
+    try {
+      const formData = new FormData();
+      formData.append('video', videoFile);
+      
+      const response = await API.put<ApiResponse<null>>(`/api/Lessons/${lessonId}/video/course/${courseId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to upload video for lesson ${lessonId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to upload video',
+        errors: ['Network error while uploading video'],
+        statusCode: 500
+      };
+    }
+  },
+
+  // Get students enrolled in a course
+  getCourseStudents: async (courseId: number): Promise<ApiResponse<User[]>> => {
+    try {
+      const response = await API.get(`/api/Courses/${courseId}/students`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching students for course ${courseId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch enrolled students',
+        errors: ['Network error while fetching students'],
+        statusCode: 500
+      };
+    }
   }
 };
 
@@ -581,6 +620,35 @@ export const UserAPI = {
         message: 'An error occurred while registering',
         statusCode: 500,
         errors: ['Registration service is unavailable'],
+        data: undefined
+      };
+    }
+  },
+
+  // Report a user
+  async reportUser(reportData: { 
+    reportedUserId: number, 
+    reason: string, 
+    details: string 
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await API.post('/api/UserReports', reportData);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          isSuccess: false,
+          message: error.response?.data?.message || 'Failed to submit report',
+          statusCode: error.response?.status || 500,
+          errors: error.response?.data?.errors || ['An unknown error occurred'],
+          data: undefined
+        };
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while submitting the report',
+        statusCode: 500,
+        errors: ['Report service is unavailable'],
         data: undefined
       };
     }

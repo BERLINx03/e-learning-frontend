@@ -1,48 +1,106 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { UserAPI } from '../api/axios';
+import ProfileActions from '../components/user/ProfileActions';
 
-const Profile: React.FC = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+interface ProfileProps {
+  userId?: string; // Optional prop to view another user's profile
+}
 
-  if (!user) {
+const Profile: React.FC<ProfileProps> = ({ userId: propUserId }) => {
+  const { user: currentUser, isLoading } = useAuth();
+  const { userId: paramUserId } = useParams<{ userId: string }>();
+  const [profileUser, setProfileUser] = useState(currentUser);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Determine which user ID to use
+  const userId = propUserId || paramUserId || (currentUser ? currentUser.id : null);
+  const isOwnProfile = currentUser && userId === currentUser.id;
+
+  useEffect(() => {
+    // If viewing own profile, use currentUser data
+    if (isOwnProfile && currentUser) {
+      setProfileUser(currentUser);
+      return;
+    }
+    
+    // If viewing another user's profile, fetch their data
+    if (userId) {
+      fetchUserProfile(userId);
+    }
+  }, [userId, currentUser, isOwnProfile]);
+
+  const fetchUserProfile = async (id: string | number) => {
+    try {
+      setLoading(true);
+      // This would need to be implemented in your API
+      // For now, we'll just use the currentUser as a fallback
+      if (currentUser) {
+        setProfileUser(currentUser);
+      } else {
+        setError('User profile not found');
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setError('Failed to load user profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex justify-center items-center">
+      <div className="min-h-screen bg-primary flex justify-center items-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading profile...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-color-secondary">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profileUser) {
+    return (
+      <div className="min-h-screen bg-primary flex justify-center items-center">
+        <div className="text-center">
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+            <p>{error || 'User profile not found'}</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="bg-gray-900 text-white py-12">
+    <div className="min-h-screen bg-primary">
+      <div className="bg-secondary py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-center md:items-start md:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold mb-2">Profile</h1>
-              <p className="text-gray-300 text-lg">View your profile information</p>
+              <h1 className="text-4xl font-bold mb-2 text-color-primary">Profile</h1>
+              <p className="text-color-secondary text-lg">
+                {isOwnProfile ? 'Your profile information' : `${profileUser.firstName}'s profile`}
+              </p>
             </div>
-            <button
-              onClick={() => navigate('/profile/edit')}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              Edit Profile
-            </button>
+            
+            <ProfileActions 
+              profileUserId={profileUser.id}
+              profileUserName={`${profileUser.firstName} ${profileUser.lastName}`}
+              canEdit={isOwnProfile || false}
+            />
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-card rounded-xl shadow-lg overflow-hidden">
           <div className="p-8">
             <div className="flex flex-col items-center mb-8">
               <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4">
                 <img
-                  src={user.profilePictureUrl || '/default-avatar.png'}
+                  src={profileUser.profilePictureUrl || '/default-avatar.png'}
                   alt="Profile"
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -51,40 +109,42 @@ const Profile: React.FC = () => {
                   }}
                 />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">{user.firstName} {user.lastName}</h2>
-              <p className="text-gray-500 mt-1">{user.email}</p>
-              <span className="mt-2 px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-800 capitalize">
-                {user.role}
+              <h2 className="text-2xl font-bold text-color-primary">
+                {profileUser.firstName} {profileUser.lastName}
+              </h2>
+              <p className="text-color-secondary mt-1">{profileUser.email}</p>
+              <span className="mt-2 px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800 capitalize">
+                {profileUser.role}
               </span>
             </div>
 
-            <div className="border-t border-gray-200 pt-8">
+            <div className="border-t border-primary pt-8">
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Bio</h3>
-                  <p className="text-gray-600 whitespace-pre-wrap">
-                    {user.bio || 'No bio provided'}
+                  <h3 className="text-lg font-medium text-color-primary mb-2">Bio</h3>
+                  <p className="text-color-secondary whitespace-pre-wrap">
+                    {profileUser.bio || 'No bio provided'}
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Account Details</h3>
+                  <h3 className="text-lg font-medium text-color-primary mb-2">Account Details</h3>
                   <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">First Name</dt>
-                      <dd className="mt-1 text-gray-900">{user.firstName}</dd>
+                      <dt className="text-sm font-medium text-color-secondary">First Name</dt>
+                      <dd className="mt-1 text-color-primary">{profileUser.firstName}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Last Name</dt>
-                      <dd className="mt-1 text-gray-900">{user.lastName}</dd>
+                      <dt className="text-sm font-medium text-color-secondary">Last Name</dt>
+                      <dd className="mt-1 text-color-primary">{profileUser.lastName}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Email</dt>
-                      <dd className="mt-1 text-gray-900">{user.email}</dd>
+                      <dt className="text-sm font-medium text-color-secondary">Email</dt>
+                      <dd className="mt-1 text-color-primary">{profileUser.email}</dd>
                     </div>
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Role</dt>
-                      <dd className="mt-1 text-gray-900 capitalize">{user.role}</dd>
+                      <dt className="text-sm font-medium text-color-secondary">Role</dt>
+                      <dd className="mt-1 text-color-primary capitalize">{profileUser.role}</dd>
                     </div>
                   </dl>
                 </div>
