@@ -567,6 +567,99 @@ export const CourseAPI = {
         data: []
       };
     }
+  },
+
+  // Get enrolled courses for a user
+  async getUserEnrollments(userId?: number): Promise<ApiResponse<Enrollment[]>> {
+    if (userId !== undefined && (isNaN(userId) || userId <= 0)) {
+      return {
+        isSuccess: false,
+        message: 'Invalid user ID provided',
+        statusCode: 400,
+        errors: ['The provided user ID is invalid'],
+        data: []
+      };
+    }
+    
+    try {
+      const endpoint = userId !== undefined && !isNaN(userId) && userId > 0
+        ? `/api/Users/${userId}/enrollments` 
+        : '/api/Users/profile/enrollments';
+      
+      console.log(`Fetching enrollments from: ${endpoint}`);
+      const response = await API.get(endpoint);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          isSuccess: false,
+          message: error.response?.data?.message || 'Failed to fetch enrollments',
+          statusCode: error.response?.status || 500,
+          errors: error.response?.data?.errors || ['An unknown error occurred'],
+          data: []
+        };
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while fetching enrollments',
+        statusCode: 500,
+        errors: ['Enrollment service is unavailable'],
+        data: []
+      };
+    }
+  },
+
+  // Get courses for a user (created courses for instructors, enrolled courses for students)
+  async getUserCourses(userId: number): Promise<ApiResponse<Course[]>> {
+    if (isNaN(userId) || userId <= 0) {
+      console.error('Invalid user ID provided for getUserCourses:', userId);
+      return {
+        isSuccess: false,
+        message: 'Invalid user ID provided',
+        statusCode: 400,
+        errors: ['The provided user ID is invalid'],
+        data: []
+      };
+    }
+    
+    try {
+      const endpoint = `/api/Users/${userId}/courses`;
+      console.log(`Fetching user courses from: ${endpoint}`);
+      const response = await API.get(endpoint);
+      
+      console.log(`Successfully fetched courses for user ${userId}`, response.data);
+      
+      // Check if the response.data is already in the ApiResponse format
+      if (response.data.hasOwnProperty('isSuccess')) {
+        return response.data;
+      }
+      
+      // If not, wrap the data in ApiResponse format
+      return {
+        isSuccess: true,
+        message: 'User courses fetched successfully',
+        statusCode: response.status,
+        data: response.data
+      };
+    } catch (error) {
+      console.error(`Error fetching courses for user ${userId}:`, error);
+      if (axios.isAxiosError(error)) {
+        return {
+          isSuccess: false,
+          message: error.response?.data?.message || 'Failed to fetch user courses',
+          statusCode: error.response?.status || 500,
+          errors: error.response?.data?.errors || ['An unknown error occurred'],
+          data: []
+        };
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while fetching user courses',
+        statusCode: 500,
+        errors: ['Course service is unavailable'],
+        data: []
+      };
+    }
   }
 };
 
@@ -594,6 +687,21 @@ export const UserAPI = {
         message: 'An error occurred while fetching profile',
         statusCode: 500,
         data: undefined
+      };
+    }
+  },
+
+  async getUserById(userId: number): Promise<ApiResponse<User>> {
+    try {
+      const response = await API.get(`/api/Users/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching user profile with ID ${userId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch user profile',
+        errors: ['Network error while fetching user profile'],
+        statusCode: 500
       };
     }
   },
@@ -716,11 +824,22 @@ export const UserAPI = {
 
   // Get enrolled courses for a user
   async getUserEnrollments(userId?: number): Promise<ApiResponse<Enrollment[]>> {
+    if (userId !== undefined && (isNaN(userId) || userId <= 0)) {
+      return {
+        isSuccess: false,
+        message: 'Invalid user ID provided',
+        statusCode: 400,
+        errors: ['The provided user ID is invalid'],
+        data: []
+      };
+    }
+    
     try {
-      const endpoint = userId 
+      const endpoint = userId !== undefined && !isNaN(userId) && userId > 0
         ? `/api/Users/${userId}/enrollments` 
         : '/api/Users/profile/enrollments';
       
+      console.log(`Fetching enrollments from: ${endpoint}`);
       const response = await API.get(endpoint);
       return response.data;
     } catch (error) {

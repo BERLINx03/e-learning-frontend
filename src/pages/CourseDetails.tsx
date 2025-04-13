@@ -484,7 +484,7 @@ const CourseDetails: React.FC = () => {
 
               {/* Instructor Info */}
               <div className="flex items-start mt-6 bg-card rounded-lg p-6 border border-primary">
-                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-accent">
+                <Link to={`/users/${course.instructor?.id}`} className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-accent">
                   {course.instructor?.profilePictureUrl && !imageErrors[`instructor-${course.instructor?.id}`] ? (
                     <img
                       src={course.instructor?.profilePictureUrl}
@@ -500,12 +500,14 @@ const CourseDetails: React.FC = () => {
                       </span>
                     </div>
                   )}
-                </div>
+                </Link>
                 <div className="ml-6 flex-1">
                   <p className="text-sm text-color-secondary mb-1">Created by</p>
-                  <h3 className="text-xl font-semibold text-color-primary mb-2">
-                    {course.instructor?.firstName} {course.instructor?.lastName}
-                  </h3>
+                  <Link to={`/users/${course.instructor?.id}`} className="inline-block hover:underline">
+                    <h3 className="text-xl font-semibold text-color-primary mb-2">
+                      {course.instructor?.firstName} {course.instructor?.lastName}
+                    </h3>
+                  </Link>
                   {course.instructor?.bio && (
                     <p className="text-sm text-color-secondary max-w-2xl line-clamp-2">
                       {course.instructor.bio}
@@ -735,7 +737,7 @@ const CourseDetails: React.FC = () => {
                       : 'bg-secondary p-4 rounded-lg'
                   }`}
                 >
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden border border-primary">
+                  <Link to={`/users/${message.instructor?.id}`} className="relative w-8 h-8 rounded-full overflow-hidden border border-primary">
                     {!imageErrors[`message-${message.id}`] && message.instructor?.profilePictureUrl ? (
                       <img
                         src={message.instructor?.profilePictureUrl}
@@ -750,17 +752,19 @@ const CourseDetails: React.FC = () => {
                         </span>
                       </div>
                     )}
-                  </div>
+                  </Link>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium text-color-primary">
-                        {message?.instructor?.firstName} {message?.instructor?.lastName}
-                        {message.instructorId === course?.instructorId && (
-                          <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-accent-light text-accent">
-                            Instructor
-                          </span>
-                        )}
-                      </h3>
+                      <Link to={`/users/${message.instructor?.id}`} className="hover:underline">
+                        <h3 className="text-sm font-medium text-color-primary">
+                          {message?.instructor?.firstName} {message?.instructor?.lastName}
+                          {message.instructorId === course?.instructorId && (
+                            <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-accent-light text-accent">
+                              Instructor
+                            </span>
+                          )}
+                        </h3>
+                      </Link>
                       <span className="text-sm text-color-secondary">
                         {formatDate(message.sentAt)}
                       </span>
@@ -895,7 +899,7 @@ const CourseDetails: React.FC = () => {
           <div className="bg-card rounded-lg p-6 mb-8 shadow-sm border border-primary">
             <h2 className="text-2xl font-bold mb-4 text-color-primary">Instructor</h2>
             <div className="flex items-start gap-4">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden border border-primary">
+              <Link to={`/users/${course.instructor.id}`} className="relative w-16 h-16 rounded-full overflow-hidden border border-primary">
                 {!imageErrors[`instructor-${course.instructor.id}`] && course.instructor.profilePictureUrl ? (
                   <img
                     src={course.instructor.profilePictureUrl}
@@ -910,11 +914,13 @@ const CourseDetails: React.FC = () => {
                     </span>
                   </div>
                 )}
-              </div>
+              </Link>
               <div>
-                <h3 className="text-lg font-medium text-color-primary">
-                  {course.instructor.firstName} {course.instructor.lastName}
-                </h3>
+                <Link to={`/users/${course.instructor.id}`} className="inline-block hover:underline">
+                  <h3 className="text-lg font-medium text-color-primary">
+                    {course.instructor.firstName} {course.instructor.lastName}
+                  </h3>
+                </Link>
                 <p className="text-sm text-color-secondary">
                   Instructor
                 </p>
