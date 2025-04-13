@@ -170,7 +170,7 @@ const CourseForm: React.FC = () => {
     }
   };
 
-  const uploadThumbnail = async (courseId: number | string): Promise<string | null> => {
+  const uploadThumbnail = async (courseId: number): Promise<string | null> => {
     if (!thumbnailFile) return null;
     
     try {

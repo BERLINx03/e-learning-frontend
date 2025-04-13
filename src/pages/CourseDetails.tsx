@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { CourseAPI } from '../api/axios';
 import { toast } from 'react-hot-toast';
+import CourseContent from '../components/lesson/CourseContent';
 
 // Types
 interface User {
@@ -136,6 +137,7 @@ const CourseDetails: React.FC = () => {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editData, setEditData] = useState<EditCourseData | null>(null);
+  const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
     fetchCourseDetails();
@@ -285,6 +287,36 @@ const CourseDetails: React.FC = () => {
       toast.error('Failed to update course. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEnroll = async () => {
+    if (!user) {
+      toast.error('You need to be logged in to enroll in a course');
+      navigate('/auth/login');
+      return;
+    }
+
+    if (!course) {
+      toast.error('Course information not available');
+      return;
+    }
+
+    try {
+      setEnrolling(true);
+      const response = await CourseAPI.enrollInCourse(course.id);
+      
+      if (response.isSuccess) {
+        toast.success('Successfully enrolled in the course!');
+        fetchCourseDetails(); // Refresh to update enrollment status
+      } else {
+        toast.error(response.message || 'Failed to enroll in the course');
+      }
+    } catch (error) {
+      console.error('Error enrolling in course:', error);
+      toast.error('An error occurred while enrolling in the course');
+    } finally {
+      setEnrolling(false);
     }
   };
 
@@ -483,8 +515,20 @@ const CourseDetails: React.FC = () => {
                         </button>
                       </div>
                     ) : !isUserEnrolled && (
-                      <button className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors">
-                        Enroll now
+                      <button 
+                        onClick={handleEnroll}
+                        disabled={enrolling}
+                        className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {enrolling ? (
+                          <span className="flex items-center justify-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Enrolling...
+                          </span>
+                        ) : 'Enroll now'}
                       </button>
                     )}
                   </div>
@@ -511,6 +555,9 @@ const CourseDetails: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Course Content Section */}
+        <CourseContent courseId={course.id} isEnrolled={isUserEnrolled} />
 
         {/* This course includes section */}
         <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">

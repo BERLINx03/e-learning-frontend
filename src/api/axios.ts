@@ -249,25 +249,78 @@ export const CourseAPI = {
   },
 
   // Upload course thumbnail
-  uploadThumbnail: async (courseId: number | string, thumbnailFile: File): Promise<ApiResponse<string>> => {
+  uploadThumbnail: async (courseId: number, thumbnailFile: File): Promise<ApiResponse<string>> => {
     try {
       const formData = new FormData();
       formData.append('thumbnail', thumbnailFile);
       
-      // For FormData, we need to override the Content-Type to undefined so the browser sets it with the boundary
-      const response = await API.put<ApiResponse<string>>(
-        `/api/Courses/${courseId}/thumbnail`, 
+      const response = await API.post<ApiResponse<string>>(
+        `/api/Courses/${courseId}/thumbnail`,
         formData,
         {
           headers: {
-            'Content-Type': undefined,
+            'Content-Type': 'multipart/form-data',
           },
         }
       );
+      
       return response.data;
     } catch (error) {
       console.error(`Failed to upload thumbnail for course ${courseId}:`, error);
-      throw error;
+      return {
+        isSuccess: false,
+        message: 'Failed to upload thumbnail',
+        errors: ['Network error while uploading thumbnail'],
+        statusCode: 500
+      };
+    }
+  },
+
+  // Get lessons for a specific course
+  getLessonsByCourseId: async (courseId: number): Promise<ApiResponse<Lesson[]>> => {
+    try {
+      const response = await API.get(`/api/Lessons/course/${courseId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching lessons for course ${courseId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch lessons',
+        errors: ['Network error while fetching lessons'],
+        statusCode: 500
+      };
+    }
+  },
+
+  // Enroll in a course
+  enrollInCourse: async (courseId: number): Promise<ApiResponse<Enrollment>> => {
+    try {
+      const response = await API.post(`/api/Enrollments`, { courseId });
+      return response.data;
+    } catch (error) {
+      console.error(`Error enrolling in course ${courseId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to enroll in course',
+        errors: ['Network error while enrolling in course'],
+        statusCode: 500
+      };
+    }
+  },
+
+  // Mark a lesson as completed
+  markLessonAsCompleted: async (lessonId: number): Promise<ApiResponse<Progress>> => {
+    try {
+      const response = await API.post(`/api/Progress/${lessonId}/complete`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error marking lesson ${lessonId} as completed:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to mark lesson as completed',
+        errors: ['Network error while marking lesson as completed'],
+        statusCode: 500
+      };
     }
   },
 
@@ -333,6 +386,70 @@ export const CourseAPI = {
         message: 'An error occurred while fetching profile',
         statusCode: 500,
         data: undefined
+      };
+    }
+  },
+
+  // Create a new lesson
+  createLesson: async (lessonData: Partial<Lesson>): Promise<ApiResponse<Lesson>> => {
+    try {
+      const response = await API.post<ApiResponse<Lesson>>('/api/Lessons', lessonData);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create lesson:', error);
+      return {
+        isSuccess: false,
+        message: 'Failed to create lesson',
+        errors: ['Network error while creating lesson'],
+        statusCode: 500
+      };
+    }
+  },
+
+  // Update a lesson
+  updateLesson: async (lessonId: number, lessonData: Partial<Lesson>): Promise<ApiResponse<Lesson>> => {
+    try {
+      const response = await API.put<ApiResponse<Lesson>>(`/api/Lessons/${lessonId}`, lessonData);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update lesson with ID ${lessonId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to update lesson',
+        errors: ['Network error while updating lesson'],
+        statusCode: 500
+      };
+    }
+  },
+
+  // Delete a lesson
+  deleteLesson: async (lessonId: number): Promise<ApiResponse<null>> => {
+    try {
+      const response = await API.delete<ApiResponse<null>>(`/api/Lessons/${lessonId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to delete lesson with ID ${lessonId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to delete lesson',
+        errors: ['Network error while deleting lesson'],
+        statusCode: 500
+      };
+    }
+  },
+
+  // Update lesson order (reordering)
+  updateLessonOrder: async (lessonId: number, newOrder: number): Promise<ApiResponse<null>> => {
+    try {
+      const response = await API.put<ApiResponse<null>>(`/api/Lessons/${lessonId}/order`, { order: newOrder });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to update order for lesson ${lessonId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to update lesson order',
+        errors: ['Network error while updating lesson order'],
+        statusCode: 500
       };
     }
   }
