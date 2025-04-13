@@ -11,7 +11,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <App />
-    <Toaster 
+    <Toaster
       position="top-right"
       toastOptions={{
         duration: 3000,
