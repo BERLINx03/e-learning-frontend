@@ -23,6 +23,7 @@ import NewLesson from './pages/instructor/lessons/NewLesson';
 import LessonDetails from './pages/lessons/LessonDetails';
 import Profile from './pages/Profile';
 import ProfileEdit from './pages/ProfileEdit';
+import MyCourses from './pages/student/MyCourses';
 
 // Theme wrapper component to ensure theme changes are properly applied
 const ThemedApp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -70,7 +71,7 @@ function App() {
                   
                   {/* Student-only routes */}
                   <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-                    <Route path="/my-courses" element={<div>My Courses (Coming Soon)</div>} />
+                    <Route path="/my-courses" element={<MyCourses />} />
                   </Route>
                   
                   {/* Instructor-only routes */}

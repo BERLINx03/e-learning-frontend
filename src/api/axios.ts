@@ -56,6 +56,7 @@ export interface Enrollment {
   studentId: number;
   student: User;
   courseId: number;
+  course?: Course;
   enrolledAt: string;
   isCompleted: boolean;
   completedAt: string;
@@ -507,6 +508,32 @@ export const CourseAPI = {
         statusCode: 500
       };
     }
+  },
+  
+  // Get current user's enrolled courses
+  getMyCourses: async (): Promise<ApiResponse<Course[]>> => {
+    try {
+      console.log('Calling /api/Courses/my-courses endpoint');
+      const response = await API.get('/api/Courses/my-courses');
+      console.log('Response from my-courses endpoint:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user courses:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error details:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          headers: error.response?.headers
+        });
+      }
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch your courses',
+        errors: ['Network error while fetching courses'],
+        statusCode: axios.isAxiosError(error) ? error.response?.status || 500 : 500,
+        data: []
+      };
+    }
   }
 };
 
@@ -650,6 +677,35 @@ export const UserAPI = {
         statusCode: 500,
         errors: ['Report service is unavailable'],
         data: undefined
+      };
+    }
+  },
+
+  // Get enrolled courses for a user
+  async getUserEnrollments(userId?: number): Promise<ApiResponse<Enrollment[]>> {
+    try {
+      const endpoint = userId 
+        ? `/api/Users/${userId}/enrollments` 
+        : '/api/Users/profile/enrollments';
+      
+      const response = await API.get(endpoint);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        return {
+          isSuccess: false,
+          message: error.response?.data?.message || 'Failed to fetch enrollments',
+          statusCode: error.response?.status || 500,
+          errors: error.response?.data?.errors || ['An unknown error occurred'],
+          data: []
+        };
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while fetching enrollments',
+        statusCode: 500,
+        errors: ['Enrollment service is unavailable'],
+        data: []
       };
     }
   }

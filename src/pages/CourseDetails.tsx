@@ -358,22 +358,22 @@ const CourseDetails: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-primary">
       {/* Course Header - Dark background section */}
-      <div className="bg-gray-900 text-white">
+      <div className="bg-secondary text-color-primary">
         <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
           <nav className="flex mb-4 text-sm">
-            <span className="text-gray-400">Development</span>
-            <span className="mx-2 text-gray-400">&gt;</span>
-            <span className="text-gray-400">{course.category}</span>
+            <span className="text-color-secondary">Development</span>
+            <span className="mx-2 text-color-secondary">&gt;</span>
+            <span className="text-color-secondary">{course.category}</span>
           </nav>
           
           {/* Course Title Section */}
           <div className="lg:grid lg:grid-cols-3 lg:gap-8">
             <div className="lg:col-span-2">
               <h1 className="text-3xl font-bold mb-2">{course.title}</h1>
-              <p className="text-xl text-gray-300 mb-4">{course.description}</p>
+              <p className="text-xl text-color-secondary mb-4">{course.description}</p>
               
               {/* Course Stats */}
               <div className="flex items-center flex-wrap gap-4 text-sm mb-4">
@@ -391,7 +391,7 @@ const CourseDetails: React.FC = () => {
                           </svg>
                         ))}
                       </div>
-                      <span className="text-gray-400 ml-1">({course.enrollments?.length || 0} students)</span>
+                      <span className="text-color-secondary ml-1">({course.enrollments?.length || 0} students)</span>
                     </div>
                   </>
                 )}
@@ -416,9 +416,9 @@ const CourseDetails: React.FC = () => {
               </div>
 
               {/* Instructor Info */}
-              <div className="flex items-start mt-6 bg-gray-800 rounded-lg p-6">
-                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-purple-500">
-                  {!imageErrors[`instructor-${course.instructor?.id}`] && course.instructor?.profilePictureUrl ? (
+              <div className="flex items-start mt-6 bg-card rounded-lg p-6 border border-primary">
+                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-accent">
+                  {course.instructor?.profilePictureUrl && !imageErrors[`instructor-${course.instructor?.id}`] ? (
                     <img
                       src={course.instructor?.profilePictureUrl}
                       alt={`${course.instructor?.firstName} ${course.instructor?.lastName}`}
@@ -426,8 +426,8 @@ const CourseDetails: React.FC = () => {
                       onError={() => course.instructor && handleImageError(`instructor-${course.instructor.id}`)}
                     />
                   ) : (
-                    <div className="w-full h-full bg-purple-100 flex items-center justify-center">
-                      <span className="text-lg font-medium text-purple-600">
+                    <div className="w-full h-full bg-accent-light flex items-center justify-center">
+                      <span className="text-lg font-medium text-accent">
                         {course.instructor?.firstName?.[0]?.toUpperCase()}
                         {course.instructor?.lastName?.[0]?.toUpperCase()}
                       </span>
@@ -435,12 +435,12 @@ const CourseDetails: React.FC = () => {
                   )}
                 </div>
                 <div className="ml-6 flex-1">
-                  <p className="text-sm text-gray-400 mb-1">Created by</p>
-                  <h3 className="text-xl font-semibold text-white mb-2">
+                  <p className="text-sm text-color-secondary mb-1">Created by</p>
+                  <h3 className="text-xl font-semibold text-color-primary mb-2">
                     {course.instructor?.firstName} {course.instructor?.lastName}
                   </h3>
                   {course.instructor?.bio && (
-                    <p className="text-sm text-gray-300 max-w-2xl line-clamp-2">
+                    <p className="text-sm text-color-secondary max-w-2xl line-clamp-2">
                       {course.instructor.bio}
                     </p>
                   )}
@@ -450,7 +450,7 @@ const CourseDetails: React.FC = () => {
 
             {/* Course Preview Card */}
             <div className="lg:col-span-1 mt-8 lg:mt-0">
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="bg-card rounded-lg shadow-md overflow-hidden border border-primary">
                 <div className="relative pb-[56.25%] bg-gray-200">
                   {!imageErrors.thumbnail && course.thumbnailUrl ? (
                     <img 
@@ -461,7 +461,7 @@ const CourseDetails: React.FC = () => {
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                      <svg className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-16 w-16 text-color-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                     </div>
@@ -469,7 +469,7 @@ const CourseDetails: React.FC = () => {
                 </div>
                 <div className="p-6">
                   <div className="flex flex-col gap-4">
-                    <div className="text-3xl font-bold text-gray-900">£{course.price.toFixed(2)}</div>
+                    <div className="text-3xl font-bold text-color-primary">£{course.price.toFixed(2)}</div>
                     {isInstructor ? (
                       <div className="flex flex-col gap-2">
                         <button
@@ -519,7 +519,7 @@ const CourseDetails: React.FC = () => {
                       <button 
                         onClick={handleEnroll}
                         disabled={enrolling}
-                        className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {enrolling ? (
                           <span className="flex items-center justify-center">
@@ -543,15 +543,15 @@ const CourseDetails: React.FC = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* What you'll learn section */}
-        <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
-          <h2 className="text-2xl font-bold mb-4">What you'll learn</h2>
+        <div className="bg-card rounded-lg p-6 mb-8 shadow-sm border border-primary">
+          <h2 className="text-2xl font-bold mb-4 text-color-primary">What you'll learn</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {course.whatYouWillLearn.map((item, index) => (
               <div key={index} className="flex items-start">
-                <svg className="h-6 w-6 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-6 w-6 text-accent mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>{item}</span>
+                <span className="text-color-primary">{item}</span>
               </div>
             ))}
           </div>
@@ -561,15 +561,15 @@ const CourseDetails: React.FC = () => {
         <CourseContent courseId={course.id} isEnrolled={isUserEnrolled} isInstructor={isInstructor} />
 
         {/* This course includes section */}
-        <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
-          <h2 className="text-2xl font-bold mb-4">This course includes</h2>
+        <div className="bg-card rounded-lg p-6 mb-8 shadow-sm border border-primary">
+          <h2 className="text-2xl font-bold mb-4 text-color-primary">This course includes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {course.thisCourseInclude.map((item, index) => (
               <div key={index} className="flex items-center">
-                <svg className="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5 text-color-secondary mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>{item}</span>
+                <span className="text-color-primary">{item}</span>
               </div>
             ))}
           </div>
@@ -577,19 +577,19 @@ const CourseDetails: React.FC = () => {
 
         {/* Messages and Enrollment sections remain unchanged */}
         {canAccessMessages && (
-          <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
-            <h2 className="text-2xl font-bold mb-4">Course Messages</h2>
+          <div className="bg-card rounded-lg p-6 mb-8 shadow-sm border border-primary">
+            <h2 className="text-2xl font-bold mb-4 text-color-primary">Course Messages</h2>
             <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
               {course?.messages?.map((message) => (
                 <div
                   key={message.id}
                   className={`flex space-x-3 ${
                     message.instructorId === course?.instructorId
-                      ? 'bg-blue-50 p-4 rounded-lg'
-                      : 'bg-gray-50 p-4 rounded-lg'
+                      ? 'bg-accent-light p-4 rounded-lg'
+                      : 'bg-secondary p-4 rounded-lg'
                   }`}
                 >
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden border border-primary">
                     {!imageErrors[`message-${message.id}`] && message.instructor?.profilePictureUrl ? (
                       <img
                         src={message.instructor?.profilePictureUrl}
@@ -598,8 +598,8 @@ const CourseDetails: React.FC = () => {
                         onError={() => handleImageError(`message-${message.id}`)}
                       />
                     ) : (
-                      <div className="w-full h-full bg-purple-100 flex items-center justify-center">
-                        <span className="text-xs font-medium text-purple-600">
+                      <div className="w-full h-full bg-accent-light flex items-center justify-center">
+                        <span className="text-xs font-medium text-accent">
                           {message.instructor?.firstName?.[0]}{message.instructor?.lastName?.[0]}
                         </span>
                       </div>
@@ -607,19 +607,19 @@ const CourseDetails: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium text-gray-900">
+                      <h3 className="text-sm font-medium text-color-primary">
                         {message?.instructor?.firstName} {message?.instructor?.lastName}
                         {message.instructorId === course?.instructorId && (
-                          <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
+                          <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-accent-light text-accent">
                             Instructor
                           </span>
                         )}
                       </h3>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-color-secondary">
                         {formatDate(message.sentAt)}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-gray-700">{message.message}</p>
+                    <p className="mt-1 text-sm text-color-primary">{message.message}</p>
                   </div>
                 </div>
               ))}
@@ -633,12 +633,12 @@ const CourseDetails: React.FC = () => {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 min-w-0 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 min-w-0 rounded-md border border-primary px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 <button
                   type="submit"
                   disabled={!newMessage.trim()}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Send
                 </button>
@@ -648,174 +648,91 @@ const CourseDetails: React.FC = () => {
         )}
 
         {isInstructor && (
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <h2 className="text-2xl font-bold mb-4">Enrolled Students</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Student
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Enrolled Date
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Progress
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {course?.enrollments?.map((enrollment) => (
-                    <tr key={enrollment.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200">
-                            {!imageErrors[`enrollment-${enrollment.id}`] && enrollment.student?.profilePictureUrl ? (
-                              <img
-                                src={enrollment.student?.profilePictureUrl}
-                                alt={`${enrollment.student?.firstName} ${enrollment.student?.lastName}`}
-                                className="w-full h-full object-cover"
-                                onError={() => handleImageError(`enrollment-${enrollment.id}`)}
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-purple-100 flex items-center justify-center">
-                                <span className="text-xs font-medium text-purple-600">
-                                  {enrollment.student?.firstName?.[0]}{enrollment.student?.lastName?.[0]}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm font-medium text-gray-900">
-                              {enrollment?.student?.firstName} {enrollment?.student?.lastName}
-                            </p>
-                            <p className="text-sm text-gray-500">{enrollment?.student?.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(enrollment.enrolledAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                            <div
-                              className="h-2 bg-blue-600 rounded-full"
-                              style={{
-                                width: `${(enrollment?.progress?.filter(p => p.isCompleted).length / (course?.lessons?.length || 1)) * 100}%`
-                              }}
-                            ></div>
-                          </div>
-                          <span className="ml-2 text-sm text-gray-500">
-                            {Math.round((enrollment?.progress?.filter(p => p.isCompleted).length / (course?.lessons?.length || 1)) * 100)}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          enrollment.isCompleted
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {enrollment.isCompleted ? 'Completed' : 'In Progress'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Course thumbnail section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Course Thumbnail</h3>
-          
-          <div className="flex items-start">
-            {!imageErrors.thumbnail && (course?.thumbnailUrl || thumbnailFile) ? (
-              <div className="relative w-40 h-24 rounded-md overflow-hidden">
-                <img
-                  src={thumbnailFile ? URL.createObjectURL(thumbnailFile) : course?.thumbnailUrl}
-                  alt={course?.title}
-                  className="w-full h-full object-cover"
-                  onError={() => handleImageError('thumbnail')}
-                />
-              </div>
-            ) : (
-              <div className="w-40 h-24 bg-gray-200 flex items-center justify-center rounded-md">
-                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-            )}
-            
-            <div className="ml-4 flex-1">
-              {editing ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Update Thumbnail
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleThumbnailChange}
-                    className="block w-full text-sm text-gray-500
-                             file:mr-4 file:py-2 file:px-4
-                             file:rounded-md file:border-0
-                             file:text-sm file:font-semibold
-                             file:bg-blue-50 file:text-blue-700
-                             hover:file:bg-blue-100"
-                  />
-                  {thumbnailFile && (
-                    <button
-                      type="button"
-                      onClick={uploadThumbnail}
-                      disabled={isUploadingThumbnail}
-                      className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      {isUploadingThumbnail ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Uploading...
-                        </>
-                      ) : (
-                        'Upload Now'
-                      )}
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  {course?.thumbnailUrl 
-                    ? 'This is the current thumbnail for your course. You can change it by editing the course.'
-                    : 'This course has no thumbnail image. Add one by editing the course.'}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {isInstructor && (
-          <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
-            <h2 className="text-2xl font-bold mb-4">Course Management</h2>
+          <div className="bg-card rounded-lg p-6 mb-8 shadow-sm border border-primary">
+            <h2 className="text-2xl font-bold mb-4 text-color-primary">Course Management</h2>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => navigate(`/instructor/courses/${course.id}/lessons`)}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
               >
                 <svg className="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 Manage Lessons
               </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Course thumbnail section */}
+        {isInstructor && (
+          <div className="bg-card rounded-lg p-6 mb-8 shadow-sm border border-primary">
+            <h3 className="text-lg font-medium text-color-primary mb-2">Course Thumbnail</h3>
+            
+            <div className="flex items-start">
+              {!imageErrors.thumbnail && (course?.thumbnailUrl || thumbnailFile) ? (
+                <div className="relative w-40 h-24 rounded-md overflow-hidden border border-primary">
+                  <img
+                    src={thumbnailFile ? URL.createObjectURL(thumbnailFile) : course?.thumbnailUrl}
+                    alt={course?.title}
+                    className="w-full h-full object-cover"
+                    onError={() => handleImageError('thumbnail')}
+                  />
+                </div>
+              ) : (
+                <div className="w-40 h-24 bg-secondary flex items-center justify-center rounded-md">
+                  <svg className="w-10 h-10 text-color-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              )}
+              
+              <div className="ml-4 flex-1">
+                {editing ? (
+                  <div>
+                    <label className="block text-sm font-medium text-color-primary mb-2">
+                      Update Thumbnail
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleThumbnailChange}
+                      className="block w-full text-sm text-color-secondary
+                               file:mr-4 file:py-2 file:px-4
+                               file:rounded-md file:border-0
+                               file:text-sm file:font-semibold
+                               file:bg-accent-light file:text-accent
+                               hover:file:bg-accent-hover hover:file:text-white"
+                    />
+                    {thumbnailFile && (
+                      <button
+                        type="button"
+                        onClick={uploadThumbnail}
+                        disabled={isUploadingThumbnail}
+                        className="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50"
+                      >
+                        {isUploadingThumbnail ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Uploading...
+                          </>
+                        ) : (
+                          'Upload Now'
+                        )}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-color-secondary">
+                    {course?.thumbnailUrl 
+                      ? 'This is the current thumbnail for your course. You can change it by editing the course.'
+                      : 'This course has no thumbnail image. Add one by editing the course.'}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -829,10 +746,10 @@ const CourseDetails: React.FC = () => {
 
         {/* Instructor section */}
         {course.instructor && (
-          <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
-            <h2 className="text-2xl font-bold mb-4">Instructor</h2>
+          <div className="bg-card rounded-lg p-6 mb-8 shadow-sm border border-primary">
+            <h2 className="text-2xl font-bold mb-4 text-color-primary">Instructor</h2>
             <div className="flex items-start gap-4">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden border border-gray-200">
+              <div className="relative w-16 h-16 rounded-full overflow-hidden border border-primary">
                 {!imageErrors[`instructor-${course.instructor.id}`] && course.instructor.profilePictureUrl ? (
                   <img
                     src={course.instructor.profilePictureUrl}
@@ -841,21 +758,21 @@ const CourseDetails: React.FC = () => {
                     onError={() => course.instructor && handleImageError(`instructor-${course.instructor.id}`)}
                   />
                 ) : (
-                  <div className="w-full h-full bg-purple-100 flex items-center justify-center">
-                    <span className="text-lg font-medium text-purple-600">
+                  <div className="w-full h-full bg-accent-light flex items-center justify-center">
+                    <span className="text-lg font-medium text-accent">
                       {course.instructor.firstName?.[0]}{course.instructor.lastName?.[0]}
                     </span>
                   </div>
                 )}
               </div>
               <div>
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-color-primary">
                   {course.instructor.firstName} {course.instructor.lastName}
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-color-secondary">
                   Instructor
                 </p>
-                <p className="mt-2 text-sm text-gray-700">
+                <p className="mt-2 text-sm text-color-primary">
                   {course.instructor.bio || 'No bio provided by the instructor.'}
                 </p>
               </div>
