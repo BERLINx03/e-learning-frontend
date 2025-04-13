@@ -510,6 +510,23 @@ export const CourseAPI = {
     }
   },
   
+  // Check if the current user is enrolled in a course
+  getCourseEnrollmentStatus: async (courseId: number): Promise<ApiResponse<boolean>> => {
+    try {
+      const response = await API.get(`/api/Courses/${courseId}/enrollment-status`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error checking enrollment status for course ${courseId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to check enrollment status',
+        errors: ['Network error while checking enrollment status'],
+        statusCode: 500,
+        data: false
+      };
+    }
+  },
+  
   // Get current user's enrolled courses
   getMyCourses: async (): Promise<ApiResponse<Course[]>> => {
     try {

@@ -3,8 +3,16 @@ import { Link } from 'react-router-dom';
 import { CourseAPI, Course } from '../../api/axios';
 import { toast } from 'react-hot-toast';
 
+interface CourseWithEnrollmentStatus extends Course {
+  hasAccess?: boolean;
+  enrollmentStatus?: {
+    isEnrolled: boolean;
+    progress: number;
+  };
+}
+
 const MyCourses: React.FC = () => {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<CourseWithEnrollmentStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +35,32 @@ const MyCourses: React.FC = () => {
             console.warn(`Course "${course.title}" (ID: ${course.id}) has no thumbnail URL`);
           }
         });
-        setCourses(response.data);
+        
+        // Fetch enrollment status and access check for each course
+        const coursesWithStatus = await Promise.all(
+          response.data.map(async (course) => {
+            try {
+              // First get the traditional enrollment status (for progress)
+              const statusResponse = await CourseAPI.getCourseEnrollmentStatus(course.id);
+              
+              // Check if the user has access to this course
+              const courseWithAccess = {
+                ...course,
+                hasAccess: statusResponse.isSuccess ? statusResponse.data : false,
+              };
+              
+              return courseWithAccess;
+            } catch (error) {
+              console.error(`Error fetching enrollment status for course ${course.id}:`, error);
+              return {
+                ...course,
+                hasAccess: false
+              };
+            }
+          })
+        );
+        
+        setCourses(coursesWithStatus);
       } else {
         setError(response.message || 'Failed to fetch your courses');
         toast.error(response.message || 'Failed to fetch your courses');
@@ -176,17 +209,14 @@ const MyCourses: React.FC = () => {
                       }
                     })()}
                     
-                    {/* Progress indicator */}
-                    {course.enrollments && course.enrollments[0] && (
+                    {/* Access indicator */}
+                    {course.hasAccess !== undefined && (
                       <div className="absolute bottom-0 left-0 right-0">
                         <div className="h-1.5 bg-secondary">
                           <div 
                             className="h-1.5 bg-accent"
                             style={{ 
-                              width: `${Math.round(
-                                (course.enrollments[0].progress.filter(p => p.isCompleted).length / 
-                                (course.lessons?.length || 1)) * 100
-                              )}%` 
+                              width: course.hasAccess ? '100%' : '0%'
                             }}
                           ></div>
                         </div>
@@ -202,50 +232,40 @@ const MyCourses: React.FC = () => {
                       {course.category} • {course.level}
                     </div>
                     
-                    {/* Progress text */}
-                    {course.enrollments && course.enrollments[0] && (
-                      <div className="flex items-center justify-between mt-4">
-                        <div className="flex items-center">
-                          <svg className="w-5 h-5 text-accent mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="text-sm font-medium text-color-primary">
-                            {course.enrollments[0].isCompleted ? 'Completed' : 'In Progress'}
-                          </span>
-                        </div>
-                        <span className="text-sm font-medium text-accent">
-                          {Math.round(
-                            (course.enrollments[0].progress.filter(p => p.isCompleted).length / 
-                            (course.lessons?.length || 1)) * 100
-                          )}%
+                    {/* Access status */}
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center">
+                        <svg className={`w-5 h-5 mr-2 ${course.hasAccess ? 'text-accent' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={course.hasAccess ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'} />
+                        </svg>
+                        <span className="text-sm font-medium text-color-primary">
+                          {course.hasAccess ? 'Access Granted' : 'Access Required'}
                         </span>
                       </div>
-                    )}
+                    </div>
                     
                     <div className="mt-4 pt-4 border-t border-primary">
                       <Link
                         to={
-                          course.lessons && course.lessons.length > 0 && course.enrollments && course.enrollments[0]
-                            ? `/lessons/${
-                                course.enrollments[0].progress.find(p => !p.isCompleted)?.lessonId || 
-                                course.lessons[0].id
-                              }`
+                          course.lessons && course.lessons.length > 0 && course.hasAccess
+                            ? `/lessons/${course.lessons[0].id}`
                             : `/courses/${course.id}`
                         }
                         className="w-full block text-center px-4 py-2 bg-accent text-white rounded-md hover:bg-accent-hover transition-colors"
                       >
-                        {course.enrollments?.[0]?.isCompleted ? (
-                          <>
-                            <span>Review Course</span>
-                            <svg className="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                          </>
-                        ) : (
+                        {course.hasAccess ? (
                           <>
                             <span>Continue Learning</span>
                             <svg className="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </>
+                        ) : (
+                          <>
+                            <span>View Course</span>
+                            <svg className="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                           </>
                         )}

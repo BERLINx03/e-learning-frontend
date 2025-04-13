@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { CourseAPI } from '../api/axios';
 import { toast } from 'react-hot-toast';
@@ -139,10 +139,19 @@ const CourseDetails: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [editData, setEditData] = useState<EditCourseData | null>(null);
   const [enrolling, setEnrolling] = useState(false);
+  const [enrollmentStatus, setEnrollmentStatus] = useState<{isEnrolled: boolean, progress: number} | null>(null);
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(false);
 
   useEffect(() => {
     fetchCourseDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (id && user) {
+      checkEnrollmentStatus(Number(id));
+    }
+  }, [id, user]);
 
   useEffect(() => {
     // Reset image errors when course data changes
@@ -180,6 +189,30 @@ const CourseDetails: React.FC = () => {
     }
   };
 
+  const checkEnrollmentStatus = async (courseId: number) => {
+    if (!user) return;
+    
+    try {
+      setCheckingEnrollment(true);
+      const response = await CourseAPI.getCourseEnrollmentStatus(courseId);
+      
+      if (response.isSuccess) {
+        // Now response.data is a boolean value indicating if the user has access
+        setHasAccess(response.data || false);
+        
+        // Maintain compatibility with old code by creating an object with the expected structure
+        setEnrollmentStatus({
+          isEnrolled: response.data || false,
+          progress: response.data ? 0 : 0 // We don't have progress info anymore
+        });
+      }
+    } catch (error) {
+      console.error('Error checking enrollment status:', error);
+    } finally {
+      setCheckingEnrollment(false);
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !course) return;
@@ -213,9 +246,7 @@ const CourseDetails: React.FC = () => {
 
   const isInstructor = course?.instructorId === user?.id || false;
 
-  const isUserEnrolled = course?.enrollments?.some(
-    enrollment => enrollment.studentId === user?.id
-  ) || isInstructor || false;
+  const isUserEnrolled = hasAccess || enrollmentStatus?.isEnrolled || isInstructor || false;
 
   const canAccessMessages = isUserEnrolled || isInstructor;
 
@@ -558,7 +589,49 @@ const CourseDetails: React.FC = () => {
         </div>
 
         {/* Course Content Section */}
-        <CourseContent courseId={course.id} isEnrolled={isUserEnrolled} isInstructor={isInstructor} />
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-color-primary mb-6">Course Content</h2>
+          
+          {loading || checkingEnrollment ? (
+            <div className="py-8 flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+            </div>
+          ) : user && (isUserEnrolled || isInstructor) ? (
+            <CourseContent 
+              courseId={course.id} 
+              isEnrolled={true} 
+              isInstructor={isInstructor}
+            />
+          ) : (
+            <div className="bg-card rounded-lg shadow-sm p-6 text-center">
+              <div className="py-8">
+                <svg className="mx-auto h-16 w-16 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <h3 className="mt-4 text-xl font-medium text-color-primary">Course Content Locked</h3>
+                <p className="mt-2 text-color-secondary max-w-md mx-auto mb-6">
+                  You need to enroll in this course to access its content.
+                </p>
+                
+                <button
+                  onClick={handleEnroll}
+                  disabled={enrolling}
+                  className="px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50"
+                >
+                  {enrolling ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Enrolling...
+                    </span>
+                  ) : 'Enroll Now'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* This course includes section */}
         <div className="bg-card rounded-lg p-6 mb-8 shadow-sm border border-primary">
@@ -574,6 +647,36 @@ const CourseDetails: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Display enrollment progress if student is enrolled */}
+        {enrollmentStatus && enrollmentStatus.isEnrolled && !isInstructor && (
+          <div className="mb-6 bg-card rounded-lg overflow-hidden border border-border">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-color-primary">Your Progress</h3>
+                <span className="text-sm font-medium text-accent">
+                  {enrollmentStatus.progress}% Complete
+                </span>
+              </div>
+              
+              <div className="w-full bg-secondary rounded-full h-2.5">
+                <div 
+                  className="bg-accent h-2.5 rounded-full" 
+                  style={{ width: `${enrollmentStatus.progress}%` }}
+                ></div>
+              </div>
+              
+              <div className="mt-4 flex justify-end">
+                <Link
+                  to="/my-courses"
+                  className="text-sm text-accent hover:text-accent-hover"
+                >
+                  View all your courses
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Messages and Enrollment sections remain unchanged */}
         {canAccessMessages && (

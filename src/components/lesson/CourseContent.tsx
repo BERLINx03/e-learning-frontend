@@ -8,22 +8,52 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface CourseContentProps {
   courseId: number;
-  isEnrolled: boolean;
+  isEnrolled?: boolean;
   isInstructor?: boolean;
 }
 
-const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled, isInstructor }) => {
+const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: propIsEnrolled, isInstructor }) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [enrolling, setEnrolling] = useState<boolean>(false);
+  const [enrollmentStatus, setEnrollmentStatus] = useState<{isEnrolled: boolean, progress: number} | null>(null);
+  const [hasAccess, setHasAccess] = useState<boolean>(false);
+  const [checkingEnrollment, setCheckingEnrollment] = useState<boolean>(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const isEnrolled = propIsEnrolled !== undefined ? propIsEnrolled : hasAccess || enrollmentStatus?.isEnrolled || false;
+
   useEffect(() => {
     fetchLessons();
-  }, [courseId]);
+    if (user) {
+      checkEnrollmentStatus();
+    }
+  }, [courseId, user]);
+
+  const checkEnrollmentStatus = async () => {
+    if (!user) return;
+    
+    try {
+      setCheckingEnrollment(true);
+      const response = await CourseAPI.getCourseEnrollmentStatus(courseId);
+      
+      if (response.isSuccess) {
+        setHasAccess(response.data || false);
+        
+        setEnrollmentStatus({
+          isEnrolled: response.data || false,
+          progress: response.data ? 0 : 0
+        });
+      }
+    } catch (error) {
+      console.error('Error checking enrollment status:', error);
+    } finally {
+      setCheckingEnrollment(false);
+    }
+  };
 
   const fetchLessons = async () => {
     try {
@@ -65,7 +95,7 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled, isI
       
       if (response.isSuccess) {
         toast.success('Successfully enrolled in the course!');
-        window.location.reload(); // Refresh the page to update enrollment status
+        checkEnrollmentStatus();
       } else {
         toast.error(response.message || 'Failed to enroll in the course');
       }
@@ -78,10 +108,11 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled, isI
   };
 
   const handleLessonCompleted = () => {
-    fetchLessons(); // Refresh lessons to update progress
+    fetchLessons();
+    checkEnrollmentStatus();
   };
 
-  if (loading) {
+  if (loading || checkingEnrollment) {
     return (
       <div className="flex justify-center items-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
