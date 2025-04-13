@@ -210,11 +210,11 @@ const CourseDetails: React.FC = () => {
     });
   };
 
+  const isInstructor = course?.instructorId === user?.id || false;
+
   const isUserEnrolled = course?.enrollments?.some(
     enrollment => enrollment.studentId === user?.id
-  ) || false;
-
-  const isInstructor = course?.instructorId === user?.id || false;
+  ) || isInstructor || false;
 
   const canAccessMessages = isUserEnrolled || isInstructor;
 
@@ -557,7 +557,7 @@ const CourseDetails: React.FC = () => {
         </div>
 
         {/* Course Content Section */}
-        <CourseContent courseId={course.id} isEnrolled={isUserEnrolled} />
+        <CourseContent courseId={course.id} isEnrolled={isUserEnrolled} isInstructor={isInstructor} />
 
         {/* This course includes section */}
         <div className="bg-white rounded-lg p-6 mb-8 shadow-sm">
