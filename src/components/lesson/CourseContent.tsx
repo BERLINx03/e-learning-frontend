@@ -95,7 +95,8 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
       
       if (response.isSuccess) {
         toast.success('Successfully enrolled in the course!');
-        checkEnrollmentStatus();
+        // Refresh the page to update all components after enrollment
+        window.location.reload();
       } else {
         toast.error(response.message || 'Failed to enroll in the course');
       }
@@ -124,10 +125,8 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
       
       if (response.isSuccess) {
         toast.success('Successfully unenrolled from the course');
-        // Reset enrollment status
-        setEnrollmentStatus(null);
-        setHasAccess(false);
-        checkEnrollmentStatus(); // Refresh to update enrollment status
+        // Redirect to my courses page after unenrolling
+        navigate('/my-courses');
       } else {
         toast.error(response.message || 'Failed to unenroll from the course');
       }

@@ -340,7 +340,8 @@ const CourseDetails: React.FC = () => {
       
       if (response.isSuccess) {
         toast.success('Successfully enrolled in the course!');
-        fetchCourseDetails(); // Refresh to update enrollment status
+        // Refresh the page to update all components after enrollment
+        window.location.reload();
       } else {
         toast.error(response.message || 'Failed to enroll in the course');
       }
@@ -374,10 +375,8 @@ const CourseDetails: React.FC = () => {
       
       if (response.isSuccess) {
         toast.success('Successfully unenrolled from the course');
-        // Reset enrollment status
-        setEnrollmentStatus(null);
-        setHasAccess(false);
-        fetchCourseDetails(); // Refresh to update enrollment status
+        // Redirect to my courses page after unenrolling
+        navigate('/my-courses');
       } else {
         toast.error(response.message || 'Failed to unenroll from the course');
       }
