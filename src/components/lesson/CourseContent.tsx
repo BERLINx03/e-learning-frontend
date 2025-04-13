@@ -9,9 +9,10 @@ import { useAuth } from '../../contexts/AuthContext';
 interface CourseContentProps {
   courseId: number;
   isEnrolled: boolean;
+  isInstructor?: boolean;
 }
 
-const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled }) => {
+const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled, isInstructor }) => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,10 +156,17 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled }) =
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <h3 className="text-xl font-semibold text-color-primary mb-2">Course Content Locked</h3>
-                <p className="text-color-secondary text-center mb-6 max-w-md">
-                  You need to enroll in this course to access the lessons and course content.
-                </p>
-                <button 
+                {isInstructor ? (
+                  <p className="text-color-secondary text-center mb-6 max-w-md">
+                    As the instructor, you should have automatic access to your course content. Please refresh the page or contact support if this issue persists.
+                  </p>
+                ) : (
+                  <p className="text-color-secondary text-center mb-6 max-w-md">
+                    You need to enroll in this course to access the lessons and course content.
+                  </p>
+                )}
+                
+                <button
                   onClick={handleEnroll}
                   disabled={enrolling}
                   className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

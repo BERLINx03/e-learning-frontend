@@ -19,9 +19,11 @@ import InstructorDashboard from './pages/instructor/Dashboard';
 import InstructorCourses from './pages/instructor/Courses';
 import CourseForm from './pages/instructor/CourseForm';
 import LessonManagement from './pages/instructor/lessons/LessonManagement';
+import NewLesson from './pages/instructor/lessons/NewLesson';
 import LessonDetails from './pages/lessons/LessonDetails';
 import Profile from './pages/Profile';
 import ProfileEdit from './pages/ProfileEdit';
+import MyCourses from './pages/student/MyCourses';
 
 // Theme wrapper component to ensure theme changes are properly applied
 const ThemedApp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -62,13 +64,14 @@ function App() {
                     {/* Add protected routes for both roles here */}
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/edit" element={<ProfileEdit />} />
+                    <Route path="/users/:userId" element={<Profile />} />
                     <Route path="/settings" element={<div>Settings (Coming Soon)</div>} />
                     <Route path="/lessons/:id" element={<LessonDetails />} />
                   </Route>
                   
                   {/* Student-only routes */}
                   <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-                    <Route path="/my-courses" element={<div>My Courses (Coming Soon)</div>} />
+                    <Route path="/my-courses" element={<MyCourses />} />
                   </Route>
                   
                   {/* Instructor-only routes */}
@@ -78,6 +81,7 @@ function App() {
                     <Route path="/instructor/courses/create" element={<CourseForm />} />
                     <Route path="/instructor/courses/edit/:courseId" element={<CourseForm />} />
                     <Route path="/instructor/courses/:courseId/lessons" element={<LessonManagement />} />
+                    <Route path="/instructor/courses/:courseId/lessons/new" element={<NewLesson />} />
                   </Route>
                   
                   {/* Admin-only routes */}

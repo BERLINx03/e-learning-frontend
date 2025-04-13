@@ -34,7 +34,7 @@ interface LoginResponse {
 
 type AuthContextType = {
   user: User | null;
-  updateUser: (user: User) => void;
+  updateUser: (user: User | Partial<User>) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<LoginResponse>;
@@ -65,12 +65,57 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // Check if user is already logged in
     const token = localStorage.getItem('token');
+    const storedUserData = localStorage.getItem('userData');
+    
     if (token) {
       // Set default authorization header
       API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
-      // Fetch user profile
-      fetchUserProfile();
+      // First try to use stored user data
+      if (storedUserData) {
+        try {
+          const parsedData = JSON.parse(storedUserData);
+          
+          // Validate role type
+          if (parsedData && parsedData.role) {
+            const roleLower = typeof parsedData.role === 'string' 
+              ? parsedData.role.toLowerCase() 
+              : 'student';
+            
+            // Ensure role is one of the allowed values
+            if (roleLower === 'student' || roleLower === 'instructor' || roleLower === 'admin') {
+              // Create a properly typed user object
+              const userData: User = {
+                id: parsedData.id,
+                username: parsedData.username,
+                email: parsedData.email,
+                firstName: parsedData.firstName,
+                lastName: parsedData.lastName,
+                profilePictureUrl: parsedData.profilePictureUrl || '',
+                bio: parsedData.bio || '',
+                role: roleLower as 'student' | 'instructor' | 'admin'
+              };
+              
+              setUser(userData);
+              console.log('Restored user from localStorage:', userData);
+              setIsLoading(false);
+            } else {
+              console.error('Invalid role in stored user data:', parsedData.role);
+              fetchUserProfile();
+            }
+          } else {
+            console.error('No role found in stored user data');
+            fetchUserProfile();
+          }
+        } catch (error) {
+          console.error('Failed to parse stored user data:', error);
+          // If parsing fails, fetch from API
+          fetchUserProfile();
+        }
+      } else {
+        // If no stored data, fetch from API
+        fetchUserProfile();
+      }
     } else {
       setIsLoading(false);
     }
@@ -78,20 +123,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const fetchUserProfile = async () => {
     try {
+      console.log('Fetching user profile from API...');
       const response = await API.get('/api/Users/profile');
-      setUser({
+      
+      console.log('Profile response:', JSON.stringify(response.data));
+      
+      // Check if response.data exists
+      if (!response.data) {
+        throw new Error('No data received from profile API');
+      }
+      
+      // Determine role with fallback to student
+      let role: 'student' | 'instructor' | 'admin' = 'student';
+      if (response.data.role && typeof response.data.role === 'string') {
+        const roleLower = response.data.role.toLowerCase();
+        if (roleLower === 'student' || roleLower === 'instructor' || roleLower === 'admin') {
+          role = roleLower as 'student' | 'instructor' | 'admin';
+        }
+      }
+      
+      // Create a properly typed User object
+      const userData: User = {
         id: response.data.id,
         username: response.data.username,
         email: response.data.email,
         firstName: response.data.firstName,
         lastName: response.data.lastName,
-        profilePictureUrl: response.data.profilePictureUrl,
-        bio: response.data.bio,
-        role: response.data.role.toLowerCase()
-      });
+        profilePictureUrl: response.data.profilePictureUrl || '',
+        bio: response.data.bio || '',
+        role: role
+      };
+      
+      console.log('Setting user data from profile:', userData);
+      
+      // Store in localStorage for persistence
+      localStorage.setItem('userData', JSON.stringify(userData));
+      
+      setUser(userData);
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
+      // Clear authentication data on error
       localStorage.removeItem('token');
+      localStorage.removeItem('userData');
       delete API.defaults.headers.common['Authorization'];
     } finally {
       setIsLoading(false);
@@ -102,20 +175,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await API.post('/api/Users/login', { username, password });
       
+      console.log('Login response:', JSON.stringify(response.data));
+      
       if (response.data.isSuccess) {
         const { token } = response.data.data;
-        const userData = {
+        
+        // Check if user data exists in the expected structure
+        if (!response.data.data.user) {
+          console.error('User data missing in login response');
+          throw new Error('Invalid login response format');
+        }
+        
+        // Check where the role information is located
+        let role: 'student' | 'instructor' | 'admin' = 'student'; // Default role
+        if (response.data.data.role && typeof response.data.data.role === 'string') {
+          const roleLower = response.data.data.role.toLowerCase();
+          if (roleLower === 'student' || roleLower === 'instructor' || roleLower === 'admin') {
+            role = roleLower as 'student' | 'instructor' | 'admin';
+          }
+        } else if (response.data.data.user.role && typeof response.data.data.user.role === 'string') {
+          const roleLower = response.data.data.user.role.toLowerCase();
+          if (roleLower === 'student' || roleLower === 'instructor' || roleLower === 'admin') {
+            role = roleLower as 'student' | 'instructor' | 'admin';
+          }
+        }
+        
+        // Create a properly typed User object
+        const userData: User = {
           id: response.data.data.user.id,
           username: response.data.data.user.username,
           email: response.data.data.user.email,
           firstName: response.data.data.user.firstName,
           lastName: response.data.data.user.lastName,
-          profilePictureUrl: response.data.data.user.profilePictureUrl,
-          bio: response.data.data.user.bio,
-          role: response.data.data.role.toLowerCase()
+          profilePictureUrl: response.data.data.user.profilePictureUrl || '',
+          bio: response.data.data.user.bio || '',
+          role: role
         };
         
+        console.log('Setting user data:', userData);
+        
         localStorage.setItem('token', token);
+        // Also store the user data in localStorage to persist across refreshes
+        localStorage.setItem('userData', JSON.stringify(userData));
         API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         setUser(userData);
@@ -200,17 +301,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userData');
     delete API.defaults.headers.common['Authorization'];
     setUser(null);
+    console.log('User logged out, all auth data cleared');
   };
 
-  const updateUser = (user: User) => {
+  const updateUser = (updatedUser: User | Partial<User>) => {
     // Preserve the token when updating user
     const token = localStorage.getItem('token');
     if (token) {
       API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
-    setUser(user);
+    
+    // Ensure role is typed correctly if it exists
+    if (updatedUser && 'role' in updatedUser) {
+      const role = typeof updatedUser.role === 'string' ? updatedUser.role.toLowerCase() : null;
+      
+      // Only accept valid role values
+      if (role === 'student' || role === 'instructor' || role === 'admin') {
+        // If it's a complete user object, set it directly
+        if ('id' in updatedUser && 'username' in updatedUser && 'email' in updatedUser) {
+          setUser({
+            ...updatedUser,
+            role: role as 'student' | 'instructor' | 'admin'
+          } as User);
+          
+          // Update localStorage too
+          localStorage.setItem('userData', JSON.stringify({
+            ...updatedUser,
+            role: role
+          }));
+        } else if (user) {
+          // It's a partial update, merge with existing user
+          const updatedUserData = {
+            ...user,
+            ...updatedUser,
+            role: role as 'student' | 'instructor' | 'admin'
+          };
+          setUser(updatedUserData);
+          
+          // Update localStorage too
+          localStorage.setItem('userData', JSON.stringify(updatedUserData));
+        }
+      } else {
+        console.error('Invalid role value:', updatedUser.role);
+      }
+    } else if (user && updatedUser) {
+      // No role update, just merge other properties
+      const updatedUserData = { ...user, ...updatedUser };
+      setUser(updatedUserData);
+      
+      // Update localStorage too
+      localStorage.setItem('userData', JSON.stringify(updatedUserData));
+    }
   };
 
   const value = {
