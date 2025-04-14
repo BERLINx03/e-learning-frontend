@@ -100,9 +100,6 @@ const ProfileEdit: React.FC = () => {
     setIsLoading(true);
     setMessage(null);
     setImageError(false);
-    
-    // Show a loading message
-    setMessage({ type: 'success', text: 'Saving profile changes...' });
 
     try {
       // If a new image is selected, upload it first
@@ -136,42 +133,21 @@ const ProfileEdit: React.FC = () => {
             throw new Error('Invalid server response');
           }
           
-          if (response.ok && data.isSuccess) {
-            console.log('Profile picture uploaded successfully');
-            
-            // Get the fresh user data after picture upload
-            const profileResponse = await fetch('https://localhost:7104/api/Users/profile', {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            const profileData = await profileResponse.json();
-            
-            if (profileData.isSuccess && profileData.data) {
-              // Update image preview with the latest URL
-              if (profileData.data.profilePictureUrl) {
-                setPreviewUrl(profileData.data.profilePictureUrl);
-              }
-              
-              // Update user context with fresh data
-              updateUser(profileData.data);
-              localStorage.setItem('userData', JSON.stringify(profileData.data));
-            }
-            
-          } else {
+          if (!response.ok || !data.isSuccess) {
             throw new Error(data.message || 'Failed to upload profile picture');
           }
+          
+          // Wait for 2 seconds before continuing
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
         } catch (error) {
           console.error('Failed to upload profile picture:', error);
           setMessage({
             type: 'error',
             text: error instanceof Error ? error.message : 'Failed to upload profile picture'
           });
-          // Wait a moment to let the user see the error
-          await new Promise(resolve => setTimeout(resolve, 1200));
+          setIsLoading(false);
+          return; // Stop the process if picture upload fails
         }
       }
 
@@ -187,36 +163,16 @@ const ProfileEdit: React.FC = () => {
       const updateResponse = await UserAPI.updateProfile(profileUpdateData);
       
       if (updateResponse.isSuccess) {
-        // After successful update, get the fresh user data
-        try {
-          // Get fresh user data directly
-          const response = await fetch('https://localhost:7104/api/Users/profile', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          const profileData = await response.json();
-          
-          if (profileData.isSuccess && profileData.data) {
-            // Update user context with the fresh data
-            updateUser(profileData.data);
-            
-            // Update localStorage directly
-            localStorage.setItem('userData', JSON.stringify(profileData.data));
-            
-            // Show success and navigate
-            setMessage({ type: 'success', text: 'Profile updated successfully!' });
-            setTimeout(() => navigate('/profile'), 1500);
-          } else {
-            throw new Error('Failed to refresh profile data');
-          }
-        } catch (error) {
-          console.error('Error refreshing profile:', error);
-          setMessage({ type: 'error', text: 'Profile updated but failed to refresh data' });
-        }
+        // Show success message
+        setMessage({
+          type: 'success',
+          text: 'Profile updated successfully!'
+        });
+        
+        // Navigate to profile page
+        setTimeout(() => {
+          window.location.href = '/profile';
+        }, 500);
       } else {
         setMessage({ 
           type: 'error', 
