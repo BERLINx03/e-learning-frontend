@@ -61,12 +61,29 @@ const Register: React.FC = () => {
       navigate('/'); // Redirect to home page after registration
     } catch (err: any) {
       console.error('Registration error:', err);
-      if (err.response?.data?.errors && err.response.data.errors.length > 0) {
-        // Display the first error if there are multiple
-        setError(err.response.data.errors[0]);
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
+      
+      // Check for axios error response
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        if (err.response.data) {
+          if (err.response.data.errors && err.response.data.errors.length > 0) {
+            setError(err.response.data.errors[0]);
+          } else if (err.response.data.message) {
+            setError(err.response.data.message);
+          } else if (typeof err.response.data === 'string') {
+            setError(err.response.data);
+          } else {
+            setError(`Registration failed with status code: ${err.response.status}`);
+          }
+        } else {
+          setError(`Registration failed with status code: ${err.response.status}`);
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        setError('No response received from server. Please check your network connection.');
       } else if (err.message) {
+        // Something happened in setting up the request that triggered an Error
         setError(err.message);
       } else {
         setError('Failed to register. Please try again.');

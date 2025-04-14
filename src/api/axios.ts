@@ -680,9 +680,20 @@ export const UserAPI = {
     password: string;
   }): Promise<ApiResponse<any>> {
     try {
-      const response = await API.post('/api/Users/register/student', userData);
+      // Create the payload with the exact keys expected by the API
+      const payload = {
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName
+      };
+      
+      console.log('Sending student registration request with payload:', payload);
+      const response = await API.post('/api/Users/register/student', payload);
       return response.data;
     } catch (error) {
+      console.error('Registration error details:', error);
       if (axios.isAxiosError(error)) {
         return {
           isSuccess: false,
@@ -710,9 +721,20 @@ export const UserAPI = {
     password: string;
   }): Promise<ApiResponse<any>> {
     try {
-      const response = await API.post('/api/Users/register/instructor', userData);
+      // Create the payload with the exact keys expected by the API
+      const payload = {
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.firstName,
+        lastName: userData.lastName
+      };
+      
+      console.log('Sending instructor registration request with payload:', payload);
+      const response = await API.post('/api/Users/register/instructor', payload);
       return response.data;
     } catch (error) {
+      console.error('Registration error details:', error);
       if (axios.isAxiosError(error)) {
         return {
           isSuccess: false,

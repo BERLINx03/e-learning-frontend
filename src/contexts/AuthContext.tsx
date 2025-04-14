@@ -245,24 +245,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password 
       });
       
+      console.log('Student registration response:', response);
+      
       if (response.isSuccess) {
-        const { token, user } = response.data;
-        
-        localStorage.setItem('token', token);
-        API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        setUser({
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          profilePictureUrl: user.profilePictureUrl,
-          bio: user.bio,
-          role: 'student'
-        });
+        // Handle different response structures
+        if (response.data) {
+          // Check if response has token and user properties
+          if (response.data.token && response.data.user) {
+            const { token, user } = response.data;
+            
+            localStorage.setItem('token', token);
+            API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            
+            setUser({
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              profilePictureUrl: user.profilePictureUrl || '',
+              bio: user.bio || '',
+              role: 'student'
+            });
+          } else if (typeof response.data === 'string') {
+            // If response.data is just a token string
+            const token = response.data;
+            localStorage.setItem('token', token);
+            API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            
+            // We'll need to fetch user profile separately
+            await fetchUserProfile();
+          } else {
+            console.warn('Unexpected response structure, trying to fetch user profile');
+            await fetchUserProfile();
+          }
+        } else {
+          console.warn('Response successful but no data returned, trying to fetch user profile');
+          await fetchUserProfile();
+        }
       } else {
-        throw new Error(response.message || 'Registration failed');
+        const errorMessage = response.message || 
+                             (response.errors && response.errors.length > 0 ? response.errors[0] : 'Registration failed');
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Student registration failed:', error);
@@ -280,24 +304,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password 
       });
       
+      console.log('Instructor registration response:', response);
+      
       if (response.isSuccess) {
-        const { token, user } = response.data;
-        
-        localStorage.setItem('token', token);
-        API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        
-        setUser({
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          profilePictureUrl: user.profilePictureUrl,
-          bio: user.bio,
-          role: 'instructor'
-        });
+        // Handle different response structures
+        if (response.data) {
+          // Check if response has token and user properties
+          if (response.data.token && response.data.user) {
+            const { token, user } = response.data;
+            
+            localStorage.setItem('token', token);
+            API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            
+            setUser({
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              profilePictureUrl: user.profilePictureUrl || '',
+              bio: user.bio || '',
+              role: 'instructor'
+            });
+          } else if (typeof response.data === 'string') {
+            // If response.data is just a token string
+            const token = response.data;
+            localStorage.setItem('token', token);
+            API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            
+            // We'll need to fetch user profile separately
+            await fetchUserProfile();
+          } else {
+            console.warn('Unexpected response structure, trying to fetch user profile');
+            await fetchUserProfile();
+          }
+        } else {
+          console.warn('Response successful but no data returned, trying to fetch user profile');
+          await fetchUserProfile();
+        }
       } else {
-        throw new Error(response.message || 'Registration failed');
+        const errorMessage = response.message || 
+                             (response.errors && response.errors.length > 0 ? response.errors[0] : 'Registration failed');
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Instructor registration failed:', error);
