@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { UserAPI } from '../api/axios';
 import ProfileActions from '../components/user/ProfileActions';
 import UserCourses from '../components/user/UserCourses';
-import MyCoursesTester from '../components/user/MyCoursesTester';
 import { toast } from 'react-hot-toast';
 
 interface ProfileProps {
@@ -266,13 +265,6 @@ const Profile: React.FC<ProfileProps> = ({ userId: propUserId }) => {
             isOwnProfile={isOwnProfile || false} 
           />
         </div>
-        
-        {/* Debug tester - only visible for your own profile */}
-        {isOwnProfile && (
-          <div className="mt-8">
-            <MyCoursesTester />
-          </div>
-        )}
       </div>
       
       {/* Report User Modal */}

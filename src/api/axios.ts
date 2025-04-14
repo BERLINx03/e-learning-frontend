@@ -158,7 +158,6 @@ interface UpdateProfileRequest {
   lastName: string;
   email: string;
   bio: string;
-  profilePictureUrl: string;
 }
 
 // Course API methods
@@ -371,39 +370,6 @@ export const CourseAPI = {
     } catch (error) {
       console.error('Failed to mark message as read:', error);
       throw error;
-    }
-  },
-
-  updateProfile: async (data: UpdateProfileRequest): Promise<ApiResponse> => {
-    try {
-      const response = await API.put('/api/Users/profile', data);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        return error.response.data as ApiResponse;
-      }
-      return {
-        isSuccess: false,
-        message: 'An error occurred while updating profile',
-        statusCode: 500
-      };
-    }
-  },
-
-  getProfile: async (): Promise<ApiResponse<User>> => {
-    try {
-      const response = await API.get('/api/Users/profile');
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        return error.response.data as ApiResponse<User>;
-      }
-      return {
-        isSuccess: false,
-        message: 'An error occurred while fetching profile',
-        statusCode: 500,
-        data: undefined
-      };
     }
   },
 
@@ -706,33 +672,6 @@ export const UserAPI = {
     }
   },
 
-  async updateProfile(data: Partial<User>): Promise<ApiResponse<User>> {
-    try {
-      const response = await API.put('/api/Users/profile', data);
-      return {
-        isSuccess: true,
-        message: 'Profile updated successfully',
-        data: response.data,
-        statusCode: response.status
-      };
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        return {
-          isSuccess: false,
-          message: error.response?.data?.message || 'Failed to update profile',
-          statusCode: error.response?.status || 500,
-          data: undefined
-        };
-      }
-      return {
-        isSuccess: false,
-        message: 'An error occurred while updating profile',
-        statusCode: 500,
-        data: undefined
-      };
-    }
-  },
-
   async registerStudent(userData: {
     firstName: string;
     lastName: string;
@@ -860,6 +799,117 @@ export const UserAPI = {
         data: []
       };
     }
+  },
+
+  async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse> {
+    try {
+      const response = await API.put('/api/Users/profile', data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return error.response.data as ApiResponse;
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while updating profile',
+        statusCode: 500
+      };
+    }
+  },
+
+  async uploadProfilePicture(imageFile: File): Promise<ApiResponse<string>> {
+    return new Promise((resolve) => {
+      console.log('Uploading profile picture with simplified approach:', imageFile.name);
+      
+      const xhr = new XMLHttpRequest();
+      xhr.withCredentials = false; // Try without credentials
+      
+      // Log all XMLHttpRequest events
+      xhr.onreadystatechange = function() {
+        console.log(`XHR state change: readyState=${xhr.readyState}, status=${xhr.status}`);
+      };
+      
+      xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100;
+          console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+        }
+      };
+      
+      xhr.open('PUT', 'https://localhost:7104/api/Users/profile/picture', true);
+      
+      // Add authorization header
+      const token = localStorage.getItem('token');
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+      
+      xhr.onload = function() {
+        console.log('XHR Response complete - status:', xhr.status);
+        console.log('XHR Response headers:', xhr.getAllResponseHeaders());
+        console.log('XHR Response text:', xhr.responseText);
+        
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const responseData = JSON.parse(xhr.responseText);
+            console.log('Parsed response data:', responseData);
+            resolve({
+              isSuccess: true,
+              message: 'Profile picture uploaded successfully',
+              data: responseData.data || '',
+              statusCode: xhr.status
+            });
+          } catch (error) {
+            console.error('Error parsing response:', error);
+            
+            // If parsing failed but status is success, use the raw response
+            if (xhr.responseText && xhr.responseText.length > 0) {
+              resolve({
+                isSuccess: true,
+                message: 'Profile picture uploaded successfully',
+                data: xhr.responseText,
+                statusCode: xhr.status
+              });
+            } else {
+              resolve({
+                isSuccess: false,
+                message: 'Error parsing server response',
+                statusCode: xhr.status,
+                data: ''
+              });
+            }
+          }
+        } else {
+          console.error('Server returned error status:', xhr.status);
+          resolve({
+            isSuccess: false,
+            message: 'Server error: ' + xhr.statusText,
+            statusCode: xhr.status,
+            data: ''
+          });
+        }
+      };
+      
+      xhr.onerror = function(e) {
+        console.error('XHR Network Error:', e);
+        resolve({
+          isSuccess: false,
+          message: 'Network error while uploading profile picture',
+          statusCode: 0,
+          data: ''
+        });
+      };
+      
+      // Create basic FormData
+      const formData = new FormData();
+      formData.append('picture', imageFile);
+      
+      // Log what we're sending
+      console.log('Sending file:', imageFile.name, imageFile.type, imageFile.size);
+      
+      // Send the request
+      xhr.send(formData);
+    });
   }
 };
 

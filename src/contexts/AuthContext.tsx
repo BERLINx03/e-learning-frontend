@@ -41,7 +41,7 @@ type AuthContextType = {
   registerStudent: (firstName: string, lastName: string, username: string, email: string, password: string) => Promise<void>;
   registerInstructor: (firstName: string, lastName: string, username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  fetchUserProfile: () => Promise<void>;
+  fetchUserProfile: () => Promise<User | undefined>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -124,7 +124,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const fetchUserProfile = async () => {
     try {
       console.log('Fetching user profile from API...');
-      const response = await API.get('/api/Users/profile');
+      
+      // Force fresh data by adding a cache-busting timestamp
+      const response = await API.get(`/api/Users/profile?t=${new Date().getTime()}`);
       
       console.log('Profile response:', JSON.stringify(response.data));
       
@@ -156,10 +158,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       console.log('Setting user data from profile:', userData);
       
-      // Store in localStorage for persistence
+      // Store in localStorage for persistence and force overwrite
+      localStorage.removeItem('userData');
       localStorage.setItem('userData', JSON.stringify(userData));
       
+      // Update the user state
       setUser(userData);
+      
+      return userData;
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       // Clear authentication data on error
@@ -308,6 +314,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const updateUser = (updatedUser: User | Partial<User>) => {
+    console.log('Updating user with new data:', updatedUser);
+    
     // Preserve the token when updating user
     const token = localStorage.getItem('token');
     if (token) {
