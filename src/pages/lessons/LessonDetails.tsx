@@ -167,9 +167,12 @@ const LessonDetails: React.FC = () => {
               <div className="flex items-center justify-between mb-2">
                 <Link 
                   to={`/courses/${lesson?.courseId}`}
-                  className="text-accent hover:text-accent-hover"
+                  className="text-accent hover:text-accent-hover flex items-center"
                 >
-                  &larr; Back to Course
+                  <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  Back to Course
                 </Link>
                 
                 <div className="text-sm text-color-secondary">
@@ -183,30 +186,6 @@ const LessonDetails: React.FC = () => {
                   className="bg-accent h-2.5 rounded-full transition-all duration-500 ease-out" 
                   style={{ width: `${courseProgress}%` }}
                 ></div>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => prevLesson && navigate(`/lessons/${prevLesson.id}`)}
-                  disabled={!prevLesson}
-                  className={`flex items-center text-sm ${prevLesson ? 'text-accent hover:text-accent-hover' : 'text-color-disabled cursor-not-allowed'}`}
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  Previous
-                </button>
-                
-                <button
-                  onClick={() => nextLesson && navigate(`/lessons/${nextLesson.id}`)}
-                  disabled={!nextLesson}
-                  className={`flex items-center text-sm ${nextLesson ? 'text-accent hover:text-accent-hover' : 'text-color-disabled cursor-not-allowed'}`}
-                >
-                  Next
-                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
               </div>
             </div>
             
@@ -244,33 +223,37 @@ const LessonDetails: React.FC = () => {
                   )}
                 </button>
               </div>
-              <p className="text-color-secondary mt-2">{lesson?.description}</p>
             </div>
             
             {/* Lesson Content */}
             <div className="bg-card rounded-lg shadow-sm overflow-hidden">
-              <div className="p-6">
-                {/* Video Content */}
-                {lesson?.videoUrl && (
-                  <div className="mb-8">
-                    <h2 className="text-xl font-medium text-color-primary mb-4">Video Lesson</h2>
-                    <div className="relative pb-[56.25%] bg-black rounded-lg overflow-hidden">
-                      <video 
-                        className="absolute inset-0 w-full h-full object-contain"
-                        controls
-                        src={lesson.videoUrl}
-                      >
-                        Your browser does not support the video tag.
-                      </video>
-                    </div>
+              {/* Video Content */}
+              {lesson?.videoUrl && (
+                <div className="mb-6">
+                  <div className="relative pb-[56.25%] bg-black rounded-t-lg overflow-hidden">
+                    <video 
+                      className="absolute inset-0 w-full h-full object-contain"
+                      controls
+                      src={lesson.videoUrl}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
                   </div>
-                )}
+                </div>
+              )}
+
+              <div className="p-6">
+                {/* Description */}
+                <div className="mb-6">
+                  <h2 className="text-lg font-semibold text-color-primary mb-2">Description</h2>
+                  <p className="text-color-secondary">{lesson?.description}</p>
+                </div>
 
                 {/* Document Content */}
                 {lesson?.documentUrl && (
-                  <div className="mb-8">
-                    <h2 className="text-xl font-medium text-color-primary mb-4">Supplementary Material</h2>
-                    <div className="border border-primary rounded-lg p-4 bg-secondary">
+                  <div className="mb-6">
+                    <h2 className="text-lg font-semibold text-color-primary mb-2">Supplementary Material</h2>
+                    <div className="border border-primary rounded-lg p-4 bg-secondary hover:bg-opacity-75 transition-colors">
                       <a 
                         href={lesson.documentUrl} 
                         target="_blank" 
@@ -288,23 +271,54 @@ const LessonDetails: React.FC = () => {
 
                 {/* Text Content */}
                 {lesson?.content && (
-                  <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown>{lesson.content}</ReactMarkdown>
+                  <div>
+                    <h2 className="text-lg font-semibold text-color-primary mb-2">Lesson Content</h2>
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown>{lesson.content}</ReactMarkdown>
+                    </div>
                   </div>
                 )}
+              </div>
+
+              {/* Navigation Buttons */}
+              <div className="flex items-center justify-between px-6 py-4 bg-secondary border-t border-primary">
+                <button
+                  onClick={() => prevLesson && navigate(`/lessons/${prevLesson.id}`)}
+                  disabled={!prevLesson}
+                  className={`flex items-center text-sm ${prevLesson ? 'text-accent hover:text-accent-hover' : 'text-color-disabled cursor-not-allowed'}`}
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous Lesson
+                </button>
+                
+                <button
+                  onClick={() => nextLesson && navigate(`/lessons/${nextLesson.id}`)}
+                  disabled={!nextLesson}
+                  className={`flex items-center text-sm ${nextLesson ? 'text-accent hover:text-accent-hover' : 'text-color-disabled cursor-not-allowed'}`}
+                >
+                  Next Lesson
+                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
 
           {/* Lesson List - Right Side */}
-          <div className="lg:w-80">
-            <LessonList
-              lessons={courseLessons}
-              activeLessonId={lesson?.id || null}
-              onLessonSelect={(selectedLesson) => {
-                navigate(`/lessons/${selectedLesson.id}`);
-              }}
-            />
+          <div className="w-full lg:w-1/4 bg-card rounded-lg overflow-hidden">
+            <h2 className="text-xl font-semibold p-4 border-b border-border">Course Content</h2>
+            <div className="custom-scrollbar max-h-[calc(100vh-12rem)] overflow-y-auto">
+              <LessonList
+                lessons={courseLessons}
+                activeLessonId={lesson?.id || null}
+                onLessonSelect={(selectedLesson) => {
+                  navigate(`/lessons/${selectedLesson.id}`);
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
