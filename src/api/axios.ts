@@ -407,9 +407,11 @@ export const CourseAPI = {
   },
 
   // Send a message in a course
-  sendCourseMessage: async (courseId: number, data: { message: string }): Promise<ApiResponse<CourseMessage>> => {
+  sendCourseMessage: async (courseId: number, message: string): Promise<ApiResponse<CourseMessage>> => {
     try {
-      const response = await API.post<ApiResponse<CourseMessage>>(`/api/Courses/${courseId}/messages`, data);
+      const response = await API.post<ApiResponse<CourseMessage>>(`/api/Courses/${courseId}/messages`, {
+        message: message
+      });
       return response.data;
     } catch (error) {
       console.error('Failed to send message:', error);
