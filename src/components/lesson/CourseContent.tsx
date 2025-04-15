@@ -211,23 +211,11 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Course Content - Left Side */}
         <div className="lg:col-span-1">
-          <div className="bg-card rounded-lg overflow-hidden">
+          <div className="bg-card rounded-lg overflow-hidden sticky top-4">
             <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl font-semibold text-color-primary">Course Content</h2>
-                <span className="text-sm font-medium text-color-primary">
-                  {Math.round(courseProgress)}% Complete
-                </span>
-              </div>
-              {/* Progress bar */}
-              <div className="w-full bg-secondary rounded-full h-2">
-                <div 
-                  className="bg-accent h-2 rounded-full transition-all duration-500 ease-out" 
-                  style={{ width: `${courseProgress}%` }}
-                ></div>
-              </div>
+              <h2 className="text-xl font-semibold text-color-primary">Course Content</h2>
             </div>
-            <div className="custom-scrollbar max-h-[400px] overflow-y-auto">
+            <div className="custom-scrollbar overflow-y-auto" style={{ height: '384px' }}> {/* 64px (height of each lesson item) * 6 = 384px */}
               <LessonList 
                 lessons={lessons} 
                 activeLessonId={activeLesson?.id || null}
@@ -255,13 +243,30 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
         {/* Lesson View - Right Side */}
         <div className="lg:col-span-2">
           {isEnrolled ? (
-            <LessonView 
-              lesson={activeLesson} 
-              onLessonCompleted={() => {
-                handleLessonCompleted();
-                fetchCourseProgress();
-              }}
-            />
+            <div className="bg-card rounded-lg shadow-sm">
+              <div className="p-4 border-b border-border">
+                <h2 className="text-xl font-semibold text-color-primary mb-2">{activeLesson?.title}</h2>
+                <p className="text-sm text-color-secondary">{activeLesson?.description}</p>
+                <a 
+                  href={`/lessons/${activeLesson?.id}`}
+                  className="inline-flex items-center mt-3 text-accent hover:text-accent-hover text-sm font-medium"
+                >
+                  View full lesson
+                  <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+              <div className="p-4">
+                <LessonView 
+                  lesson={activeLesson} 
+                  onLessonCompleted={() => {
+                    handleLessonCompleted();
+                    fetchCourseProgress();
+                  }}
+                />
+              </div>
+            </div>
           ) : (
             <div className="bg-card rounded-lg shadow-sm p-6">
               <div className="flex flex-col items-center justify-center py-8">
