@@ -173,7 +173,7 @@ const LessonDetails: React.FC = () => {
                 </Link>
                 
                 <div className="text-sm text-color-secondary">
-                  Course Progress: {courseProgress}%
+                  Course Progress: {Math.round(courseProgress)}%
                 </div>
               </div>
               

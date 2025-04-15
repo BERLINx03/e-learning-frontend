@@ -693,14 +693,14 @@ const CourseDetails: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-color-primary">Your Progress</h3>
                 <span className="text-sm font-medium text-accent">
-                  {enrollmentStatus.progress}% Complete
+                  {Math.round(enrollmentStatus.progress)}% Complete
                 </span>
               </div>
               
               <div className="w-full bg-secondary rounded-full h-2.5">
                 <div 
                   className="bg-accent h-2.5 rounded-full" 
-                  style={{ width: `${enrollmentStatus.progress}%` }}
+                  style={{ width: `${Math.round(enrollmentStatus.progress)}%` }}
                 ></div>
               </div>
               
