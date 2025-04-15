@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | React.ReactNode>('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
@@ -43,20 +43,46 @@ const Login: React.FC = () => {
     } catch (err: any) {
       console.error('Login error details:', err);
       
-      // Show more detailed error message
-      if (err.response) {
-        // The request was made and the server responded with an error status
-        console.error('Response error data:', err.response.data);
-        console.error('Response error status:', err.response.status);
-        setError(err.response.data?.message || `Error ${err.response.status}: ${err.response.statusText}`);
-      } else if (err.request) {
-        // The request was made but no response was received
-        console.error('No response received:', err.request);
-        setError('No response from server. Please check your network connection.');
+      // Check for banned or suspended account messages
+      if (err.response?.data?.errors?.length > 0) {
+        const errorMessage = err.response.data.errors[0];
+        
+        if (errorMessage.includes('banned')) {
+          setError(
+            <div>
+              <p className="font-medium mb-2">{errorMessage}</p>
+              <p className="text-sm">
+                Please contact support at{' '}
+                <a href="mailto:abdallahelsokkary4399@gmail.com" className="text-accent hover:underline">
+                  abdallahelsokkary4399@gmail.com
+                </a>
+              </p>
+            </div>
+          );
+        } else if (errorMessage.includes('suspended')) {
+          // Extract the suspension end date from the message
+          const dateMatch = errorMessage.match(/until\s+([^\.]+)/);
+          if (dateMatch) {
+            setError(
+              <div>
+                <p className="font-medium mb-2">{errorMessage}</p>
+                <p className="text-sm">
+                  Your account will be automatically reactivated on {dateMatch[1]}.
+                </p>
+              </div>
+            );
+          } else {
+            setError(errorMessage);
+          }
+        } else {
+          setError(errorMessage);
+        }
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
       } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('Request setup error:', err.message);
-        setError(`Error: ${err.message}`);
+        setError('An unexpected error occurred. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -79,8 +105,47 @@ const Login: React.FC = () => {
         </div>
         
         {error && (
-          <div className="bg-danger bg-opacity-10 border border-danger text-danger px-4 py-3 rounded-md" role="alert">
-            <span className="block sm:inline">{error}</span>
+          <div className="bg-danger bg-opacity-10 border border-danger px-4 py-3 rounded-md" role="alert">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-danger" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3 text-text-primary">
+                {typeof error === 'string' ? (
+                  <div className="space-y-2">
+                    <div className="font-medium">{error}</div>
+                    {error.includes('banned') && (
+                      <div className="text-sm">
+                        <p className="mb-2">Your account has been permanently banned from the platform.</p>
+                        <div className="flex items-center space-x-2">
+                          <svg className="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                          <a href="mailto:abdallahelsokkary4399@gmail.com" className="text-accent hover:text-accent hover:underline">
+                            Contact Support
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                    {error.includes('suspended') && (
+                      <div className="text-sm">
+                        <p className="mb-2">Your account is temporarily suspended.</p>
+                        <div className="flex items-center space-x-2">
+                          <svg className="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                          </svg>
+                          <span>Account will be reactivated on {error.match(/until\s+([^\.]+)/)?.[1]}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  error
+                )}
+              </div>
+            </div>
           </div>
         )}
         
