@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { CourseAPI } from '../api/axios';
@@ -142,6 +142,23 @@ const CourseDetails: React.FC = () => {
   const [enrollmentStatus, setEnrollmentStatus] = useState<{isEnrolled: boolean, progress: number} | null>(null);
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [checkingEnrollment, setCheckingEnrollment] = useState(false);
+  const [courseProgress, setCourseProgress] = useState(0);
+
+  const isInstructor = course?.instructorId === user?.id || false;
+  const isUserEnrolled = hasAccess || enrollmentStatus?.isEnrolled || isInstructor || false;
+
+  const fetchCourseProgress = useCallback(async () => {
+    if (!id || !isUserEnrolled) return;
+    
+    try {
+      const response = await CourseAPI.getCourseProgress(Number(id));
+      if (response.isSuccess && response.data !== undefined) {
+        setCourseProgress(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching course progress:', error);
+    }
+  }, [id, isUserEnrolled]);
 
   useEffect(() => {
     fetchCourseDetails();
@@ -152,6 +169,12 @@ const CourseDetails: React.FC = () => {
       checkEnrollmentStatus(Number(id));
     }
   }, [id, user]);
+
+  useEffect(() => {
+    if (isUserEnrolled) {
+      fetchCourseProgress();
+    }
+  }, [isUserEnrolled, fetchCourseProgress]);
 
   useEffect(() => {
     // Reset image errors when course data changes
@@ -242,10 +265,6 @@ const CourseDetails: React.FC = () => {
       minute: '2-digit'
     });
   };
-
-  const isInstructor = course?.instructorId === user?.id || false;
-
-  const isUserEnrolled = hasAccess || enrollmentStatus?.isEnrolled || isInstructor || false;
 
   const canAccessMessages = isUserEnrolled || isInstructor;
 
@@ -537,6 +556,22 @@ const CourseDetails: React.FC = () => {
                     </>
                   )}
                 </button>
+              )}
+
+              {/* Course Progress */}
+              {isUserEnrolled && (
+                <div className="mt-4 bg-card rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-color-primary">Course Progress</h3>
+                    <span className="text-sm font-medium text-accent">{Math.round(courseProgress)}%</span>
+                  </div>
+                  <div className="w-full bg-primary rounded-full h-2.5">
+                    <div
+                      className="bg-accent h-2.5 rounded-full transition-all duration-300"
+                      style={{ width: `${courseProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
               )}
             </div>
 
