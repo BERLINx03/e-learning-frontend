@@ -604,83 +604,87 @@ const CourseDetails: React.FC = () => {
 
         {/* Course Messages */}
         <div className="mt-12">
-          <div className="bg-card rounded-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-color-primary">Course Messages</h2>
-              {course.messages && course.messages.length > 0 && (
-                <span className="text-sm text-color-secondary">
-                  {course.messages.length} {course.messages.length === 1 ? 'message' : 'messages'}
-                </span>
-              )}
+          <div className="bg-card rounded-lg shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-border">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-color-primary">Course Announcements</h2>
+                {course.messages && course.messages.length > 0 && (
+                  <span className="text-sm text-color-secondary bg-primary px-3 py-1 rounded-full">
+                    {course.messages.length} {course.messages.length === 1 ? 'message' : 'messages'}
+                  </span>
+                )}
+              </div>
             </div>
             
-            {course.messages && course.messages.length > 0 ? (
-              <div className="space-y-4">
-                {course.messages.map((message) => (
-                  <div 
-                    key={message.id} 
-                    className="flex items-start space-x-4 p-4 bg-primary rounded-lg hover:bg-primary/80 transition-colors duration-200"
-                  >
-                    <div className="flex-shrink-0">
-                      <img
-                        src={message.instructor.profilePictureUrl || '/default-avatar.png'}
-                        alt={`${message.instructor.firstName} ${message.instructor.lastName}`}
-                        className="h-10 w-10 rounded-full object-cover border-2 border-accent"
-                        onError={(e) => handleImageError(`message-${message.id}`)}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center">
-                          <p className="text-sm font-semibold text-color-primary">
-                            {message.instructor.firstName} {message.instructor.lastName}
-                          </p>
-                          <span className="ml-2 px-2 py-0.5 text-xs font-medium text-accent bg-accent/10 rounded-full">
-                            Instructor
+            <div className="divide-y divide-border">
+              {course.messages && course.messages.length > 0 ? (
+                course.messages.map((message) => (
+                  <div key={message.id} className="p-6 hover:bg-primary/50 transition-colors duration-200">
+                    <div className="flex items-start space-x-4">
+                      <div className="flex-shrink-0">
+                        <img
+                          src={message.instructor.profilePictureUrl || '/default-avatar.png'}
+                          alt={`${message.instructor.firstName} ${message.instructor.lastName}`}
+                          className="h-10 w-10 rounded-full object-cover ring-2 ring-accent/20"
+                          onError={(e) => handleImageError(`message-${message.id}`)}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center">
+                            <p className="text-sm font-semibold text-color-primary">
+                              {message.instructor.firstName} {message.instructor.lastName}
+                            </p>
+                            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-accent/10 text-accent rounded-full">
+                              Instructor
+                            </span>
+                          </div>
+                          <span className="text-xs text-color-secondary">
+                            {new Date(message.sentAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
                           </span>
                         </div>
-                        <span className="text-xs text-color-secondary">
-                          {new Date(message.sentAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
+                        <p className="text-sm text-color-secondary whitespace-pre-wrap break-words leading-relaxed">
+                          {message.message}
+                        </p>
                       </div>
-                      <p className="text-sm text-color-secondary whitespace-pre-wrap break-words">{message.message}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-primary/50 rounded-lg">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
+                ))
+              ) : (
+                <div className="px-6 py-12 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <p className="text-base font-medium text-color-primary">No announcements yet</p>
+                  <p className="mt-1 text-sm text-color-secondary">Course announcements will appear here</p>
                 </div>
-                <p className="text-base font-medium text-color-primary">No messages yet</p>
-                <p className="mt-1 text-sm text-color-secondary">Be the first to start the conversation!</p>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Message Input */}
-            {(isInstructor || isUserEnrolled) && (
-              <div className="mt-6">
-                <form onSubmit={handleSendMessage} className="space-y-4">
+            {isInstructor && (
+              <div className="px-6 py-4 bg-primary border-t border-border">
+                <form onSubmit={handleSendMessage} className="space-y-3">
                   <div className="relative">
                     <textarea
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message..."
-                      className="w-full px-4 py-3 text-sm text-color-primary bg-primary border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
+                      placeholder="Write an announcement..."
+                      className="w-full px-4 py-3 text-sm text-color-primary bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent resize-none"
                       rows={3}
+                      maxLength={1000}
                     />
-                    <div className="absolute bottom-3 right-3 flex items-center space-x-2">
+                    <div className="absolute bottom-3 right-3">
                       <span className="text-xs text-color-secondary">
-                        {newMessage.length} / 1000
+                        {newMessage.length}/1000
                       </span>
                     </div>
                   </div>
@@ -688,12 +692,12 @@ const CourseDetails: React.FC = () => {
                     <button
                       type="submit"
                       disabled={!newMessage.trim()}
-                      className="px-6 py-2.5 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                      className="inline-flex items-center px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                       </svg>
-                      <span>Send Message</span>
+                      Post Announcement
                     </button>
                   </div>
                 </form>
