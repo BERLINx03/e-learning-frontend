@@ -229,13 +229,28 @@ export const CourseAPI = {
   },
 
   // Update a course
-  updateCourse: async (courseId: number | string, courseData: Partial<Course>): Promise<ApiResponse<Course>> => {
+  updateCourse: async (courseId: number, courseData: {
+    title?: string;
+    description?: string;
+    category?: string;
+    level?: string;
+    price?: number;
+    isPublished?: boolean;
+    whatYouWillLearn?: string[];
+    thisCourseInclude?: string[];
+    duration?: number;
+    language?: string;
+  }) => {
     try {
-      const response = await API.put<ApiResponse<Course>>(`/api/Courses/${courseId}`, courseData);
+      const response = await API.put(`/api/Courses/${courseId}`, courseData);
       return response.data;
     } catch (error) {
-      console.error(`Failed to update course with ID ${courseId}:`, error);
-      throw error;
+      console.error('Error updating course:', error);
+      return {
+        isSuccess: false,
+        message: 'Failed to update course',
+        errors: [(error as any)?.message || 'Unknown error occurred'],
+      };
     }
   },
 
@@ -661,7 +676,32 @@ export const CourseAPI = {
         data: []
       };
     }
-  }
+  },
+
+  updateCourseThumbnail: async (courseId: number, thumbnailFile: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('thumbnail', thumbnailFile);
+
+      const response = await API.put(
+        `/api/Courses/${courseId}/thumbnail`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating course thumbnail:', error);
+      return {
+        isSuccess: false,
+        message: 'Failed to update course thumbnail',
+        errors: [(error as any)?.message || 'Unknown error occurred'],
+      };
+    }
+  },
 };
 
 export const UserAPI = {

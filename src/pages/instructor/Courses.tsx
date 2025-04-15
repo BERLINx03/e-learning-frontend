@@ -75,8 +75,17 @@ const InstructorCourses: React.FC = () => {
 
   const handleToggleStatus = async (courseId: number, course: Course) => {
     try {
-      const response = await CourseAPI.updateCourse(courseId, { 
-        isPublished: !course.isPublished 
+      const response = await CourseAPI.updateCourse(courseId, {
+        title: course.title,
+        description: course.description,
+        category: course.category,
+        level: course.level,
+        price: course.price,
+        isPublished: !course.isPublished,
+        whatYouWillLearn: course.whatYouWillLearn,
+        thisCourseInclude: course.thisCourseInclude,
+        duration: course.duration,
+        language: course.language
       });
       
       if (response.isSuccess) {
@@ -89,6 +98,47 @@ const InstructorCourses: React.FC = () => {
       console.error('Failed to update course status:', error);
       alert('Failed to update course status. Please try again.');
     }
+  };
+
+  const handleUpdateThumbnail = async (courseId: number, file: File) => {
+    try {
+      const response = await CourseAPI.updateCourseThumbnail(courseId, file);
+      
+      if (response.isSuccess) {
+        // Refresh course list
+        fetchCourses();
+      } else {
+        alert(`Failed to update thumbnail: ${response.message}`);
+      }
+    } catch (error) {
+      console.error('Failed to update thumbnail:', error);
+      alert('Failed to update thumbnail. Please try again.');
+    }
+  };
+
+  // Add file input ref
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Add thumbnail update button click handler
+  const handleThumbnailButtonClick = (courseId: number) => {
+    // Create a hidden file input if it doesn't exist
+    if (!fileInputRef.current) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.style.display = 'none';
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          handleUpdateThumbnail(courseId, file);
+        }
+      };
+      document.body.appendChild(input);
+      fileInputRef.current = input;
+    }
+
+    // Trigger file input click
+    fileInputRef.current.click();
   };
 
   const handlePageChange = (page: number) => {
@@ -302,6 +352,15 @@ const InstructorCourses: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <div className="flex justify-end items-center gap-2">
+                            <button
+                              onClick={() => handleThumbnailButtonClick(course.id)}
+                              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-200"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                              </svg>
+                              Update Image
+                            </button>
                             <button
                               onClick={() => handleToggleStatus(course.id, course)}
                               className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${

@@ -218,7 +218,7 @@ const CourseForm: React.FC = () => {
       let response: ApiResponse<Course>;
       
       if (isEditMode) {
-        response = await CourseAPI.updateCourse(courseId as string, payload);
+        response = await CourseAPI.updateCourse(Number(courseId), payload);
       } else {
         response = await CourseAPI.createCourse(payload);
       }
