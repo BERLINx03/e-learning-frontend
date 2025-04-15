@@ -348,7 +348,13 @@ const InstructorCourses: React.FC = () => {
                           {formatDate(course.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-heading">
-                          ${course.price.toFixed(2)}
+                          {course.price === 0 ? (
+                            <span className="px-3 py-1 text-sm font-semibold text-green-700 bg-green-100 rounded-full border border-green-200">
+                              Free
+                            </span>
+                          ) : (
+                            `$${course.price.toFixed(2)}`
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <div className="flex justify-end items-center gap-3">
