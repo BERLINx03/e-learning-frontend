@@ -16,6 +16,7 @@ const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -71,71 +72,136 @@ const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
         order: formData.order - 1 // Convert to 0-based for backend
       };
       
-      const response = await CourseAPI.createLesson(lessonData);
+      console.log('Sending lesson data:', JSON.stringify(lessonData));
       
-      if (response.isSuccess && response.data) {
-        // If we have a video file, upload it
-        if (videoFile && response.data.id) {
-          try {
-            const formData = new FormData();
-            formData.append('video', videoFile);
-            
-            // Get the token from localStorage
-            const token = localStorage.getItem('token');
-            
-            const videoResponse = await fetch(`https://localhost:7104/api/Lessons/${response.data.id}/video/course/${courseId}`, {
-              method: 'PUT',
-              body: formData,
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            
-            if (videoResponse.ok) {
-              const videoData = await videoResponse.text();
-              if (videoData) {
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+      
+      // Try using fetch directly for better debugging
+      const lessonResponse = await fetch('https://localhost:7104/api/Lessons', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json, text/plain'
+        },
+        body: JSON.stringify(lessonData)
+      });
+      
+      console.log('Lesson creation response status:', lessonResponse.status);
+      console.log('Lesson creation response status text:', lessonResponse.statusText);
+      
+      if (lessonResponse.ok) {
+        const responseData = await lessonResponse.json();
+        console.log('Lesson creation response data:', responseData);
+        
+        if (responseData.isSuccess && responseData.data) {
+          // If we have a video file, upload it
+          if (videoFile && responseData.data.id) {
+            try {
+              setUploadingVideo(true);
+              console.log(`Uploading video for lesson ID ${responseData.data.id} in course ${courseId}`);
+              
+              // Use FormData directly to have more control
+              const formData = new FormData();
+              formData.append('video', videoFile);
+              formData.append('file', videoFile);
+              
+              // Use fetch directly to have more control over the request
+              const videoResponse = await fetch(`https://localhost:7104/api/Lessons/${responseData.data.id}/video/course/${courseId}`, {
+                method: 'PUT',
+                body: formData,
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              
+              console.log('Video upload status:', videoResponse.status);
+              console.log('Video upload status text:', videoResponse.statusText);
+              
+              if (videoResponse.ok) {
+                const videoData = await videoResponse.text();
+                console.log('Video upload response text:', videoData);
+                
+                // Try to parse but don't fail if it's not JSON
                 try {
                   const parsedData = JSON.parse(videoData);
-                  if (parsedData.isSuccess) {
+                  if (parsedData.isSuccess !== false) {
                     toast.success('Video uploaded successfully!');
                   } else {
                     toast.error(parsedData.message || 'Failed to upload video');
                   }
                 } catch (e) {
-                  // If response is not JSON, just show success if status was ok
-                  toast.success('Video uploaded successfully!');
+                  // If response is not JSON, but status is OK, consider it success
+                  if (videoResponse.ok) {
+                    toast.success('Video uploaded successfully!');
+                  } else {
+                    toast.error('Failed to upload video');
+                  }
                 }
               } else {
-                toast.success('Video uploaded successfully!');
-              }
-            } else {
-              if (videoResponse.status === 401) {
-                toast.error('Unauthorized. Please log in again.');
-              } else {
-                const errorText = await videoResponse.text();
                 let errorMessage = 'Failed to upload video';
-                try {
-                  const errorData = JSON.parse(errorText);
-                  errorMessage = errorData.message || errorMessage;
-                } catch (e) {
-                  // If can't parse error response, use status text
-                  errorMessage = videoResponse.statusText || errorMessage;
+                
+                if (videoResponse.status === 401) {
+                  errorMessage = 'Unauthorized. Please log in again.';
+                } else if (videoResponse.status === 404) {
+                  errorMessage = 'Video upload endpoint not found. Check API URL.';
+                } else {
+                  try {
+                    const errorText = await videoResponse.text();
+                    console.error('Video upload error response:', errorText);
+                    
+                    try {
+                      const errorData = JSON.parse(errorText);
+                      errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                      // If can't parse error response, use status text
+                      errorMessage = videoResponse.statusText || errorMessage;
+                    }
+                  } catch (e) {
+                    console.error('Failed to read error response:', e);
+                  }
                 }
+                
                 toast.error(errorMessage);
+                console.error('Video upload failed:', errorMessage);
               }
+            } catch (error) {
+              console.error('Error uploading video:', error);
+              toast.error('Failed to upload video. Please try again.');
+            } finally {
+              setUploadingVideo(false);
             }
-          } catch (error) {
-            console.error('Error uploading video:', error);
-            toast.error('Failed to upload video. Please try again.');
           }
-        }
-        
-        toast.success('Lesson created successfully!');
-        if (onSuccess) {
-          onSuccess(response.data);
+          
+          toast.success('Lesson created successfully!');
+          if (onSuccess) {
+            onSuccess(responseData.data);
+          }
+        } else {
+          toast.error(responseData.message || 'Failed to create lesson');
         }
       } else {
-        toast.error(response.message || 'Failed to create lesson');
+        // Handle error response
+        let errorMessage = 'Failed to create lesson';
+        
+        try {
+          const errorText = await lessonResponse.text();
+          console.error('Lesson creation error response:', errorText);
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorMessage;
+          } catch (e) {
+            // If can't parse error response, use status text
+            errorMessage = lessonResponse.statusText || errorMessage;
+          }
+        } catch (e) {
+          console.error('Failed to read error response:', e);
+        }
+        
+        toast.error(errorMessage);
+        console.error('Lesson creation failed:', errorMessage);
       }
     } catch (error) {
       console.error('Error creating lesson:', error);
@@ -284,7 +350,7 @@ const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Creating...
+                    {uploadingVideo ? 'Uploading Video...' : 'Creating Lesson...'}
                   </>
                 ) : 'Create Lesson'}
               </button>

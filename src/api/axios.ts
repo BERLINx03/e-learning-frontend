@@ -484,10 +484,56 @@ export const CourseAPI = {
   // Create a new lesson
   createLesson: async (lessonData: Partial<Lesson>): Promise<ApiResponse<Lesson>> => {
     try {
-      const response = await API.post<ApiResponse<Lesson>>('/api/Lessons', lessonData);
+      console.log('Creating lesson with data:', JSON.stringify(lessonData));
+      
+      if (!lessonData.courseId) {
+        console.error('courseId is missing from lessonData');
+        return {
+          isSuccess: false,
+          message: 'Course ID is required to create a lesson',
+          statusCode: 400
+        };
+      }
+      
+      // Adding accept header explicitly
+      const config = {
+        headers: {
+          'Accept': 'text/plain, application/json'
+        }
+      };
+      
+      const token = localStorage.getItem('token');
+      console.log('Using token:', token ? 'Token exists' : 'No token found');
+      
+      // Make sure to use the correct endpoint as shown in the successful curl example
+      const response = await API.post<ApiResponse<Lesson>>('/api/Lessons', lessonData, config);
+      console.log('Lesson creation successful with response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Failed to create lesson:', error);
+      
+      // More detailed error logging
+      if (axios.isAxiosError(error)) {
+        console.error('Status:', error.response?.status);
+        console.error('Status text:', error.response?.statusText);
+        console.error('Response data:', error.response?.data);
+        console.error('Request config:', {
+          url: error.config?.url,
+          method: error.config?.method,
+          data: error.config?.data,
+          headers: error.config?.headers
+        });
+        
+        if (error.response?.status === 404) {
+          return {
+            isSuccess: false,
+            message: 'Lesson endpoint not found (404). Check API URL and server status.',
+            errors: ['API endpoint not found'],
+            statusCode: 404
+          };
+        }
+      }
+      
       return {
         isSuccess: false,
         message: 'Failed to create lesson',
@@ -565,21 +611,110 @@ export const CourseAPI = {
   addLessonVideo: async (lessonId: number, courseId: number, videoFile: File): Promise<ApiResponse<null>> => {
     try {
       const formData = new FormData();
+      // Try different field names since we don't know which one the API expects
       formData.append('video', videoFile);
+      formData.append('file', videoFile);
       
-      const response = await API.put<ApiResponse<null>>(`/api/Lessons/${lessonId}/video/course/${courseId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      console.log('Uploading video for lesson ID:', lessonId, 'in course ID:', courseId);
+      console.log('Video file details:', {
+        name: videoFile.name,
+        type: videoFile.type,
+        size: videoFile.size,
       });
-      return response.data;
+      
+      try {
+        // Try with Axios first
+        const response = await API.put<ApiResponse<null>>(
+          `/api/Lessons/${lessonId}/video/course/${courseId}`, 
+          formData,
+          {
+            headers: {
+              'Content-Type': undefined, // Let Axios set the correct content type with boundary
+              'Accept': 'application/json'
+            }
+          }
+        );
+        return response.data;
+      } catch (axiosError) {
+        console.warn('Axios upload failed, trying XMLHttpRequest approach:', axiosError);
+        
+        // Fallback to XMLHttpRequest if Axios fails
+        return new Promise((resolve) => {
+          const xhr = new XMLHttpRequest();
+          
+          xhr.open('PUT', `https://localhost:7104/api/Lessons/${lessonId}/video/course/${courseId}`, true);
+          
+          // Add authorization header
+          const token = localStorage.getItem('token');
+          if (token) {
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          }
+          
+          xhr.onload = function() {
+            console.log('XHR Upload complete - status:', xhr.status);
+            
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const responseData = JSON.parse(xhr.responseText);
+                return resolve({
+                  isSuccess: true,
+                  message: 'Video uploaded successfully',
+                  statusCode: xhr.status,
+                  data: null
+                });
+              } catch (e) {
+                return resolve({
+                  isSuccess: true,
+                  message: 'Video uploaded successfully but could not parse response',
+                  statusCode: xhr.status,
+                  data: null
+                });
+              }
+            } else {
+              return resolve({
+                isSuccess: false,
+                message: `Server error: ${xhr.statusText || 'Unknown error'}`,
+                statusCode: xhr.status,
+                errors: [`Status code: ${xhr.status}`],
+                data: null
+              });
+            }
+          };
+          
+          xhr.onerror = function() {
+            console.error('XHR Network Error');
+            return resolve({
+              isSuccess: false,
+              message: 'Network error while uploading video',
+              statusCode: 0,
+              errors: ['XHR request failed'],
+              data: null
+            });
+          };
+          
+          xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+              const percent = (e.loaded / e.total) * 100;
+              console.log(`Upload progress: ${percent.toFixed(1)}%`);
+            }
+          };
+          
+          // Create new FormData for XHR
+          const xhrFormData = new FormData();
+          xhrFormData.append('video', videoFile);
+          xhrFormData.append('file', videoFile);
+          
+          xhr.send(xhrFormData);
+        });
+      }
     } catch (error) {
       console.error(`Failed to upload video for lesson ${lessonId}:`, error);
       return {
         isSuccess: false,
         message: 'Failed to upload video',
         errors: ['Network error while uploading video'],
-        statusCode: 500
+        statusCode: 500,
+        data: null
       };
     }
   },
