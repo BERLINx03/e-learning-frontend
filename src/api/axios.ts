@@ -151,6 +151,26 @@ API.interceptors.response.use(
   },
   (error) => {
     console.error('Response error:', error.response || error.message || error);
+    
+    // Check for banned or timed out user
+    if (error.response?.status === 401) {
+      const errorData = error.response?.data;
+      const errorMessage = errorData?.message || '';
+      
+      // If the error message contains banned or suspended keywords
+      if (errorMessage.toLowerCase().includes('banned') || errorMessage.toLowerCase().includes('suspended') || errorMessage.toLowerCase().includes('timeout')) {
+        console.warn('User is banned or timed out:', errorMessage);
+        
+        // Clear authentication data
+        localStorage.removeItem('token');
+        localStorage.removeItem('userData');
+        delete API.defaults.headers.common['Authorization'];
+        
+        // Redirect to login with error message
+        window.location.href = `/login?error=${encodeURIComponent(errorMessage)}`;
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -1025,7 +1045,31 @@ export const UserAPI = {
       // Send the request
       xhr.send(formData);
     });
-  }
+  },
+
+  // Check user status (for ban/timeout detection)
+  async checkUserStatus(): Promise<ApiResponse<{isActive: boolean, isBanned?: boolean, timeoutUntil?: string, canLogin?: boolean}>> {
+    try {
+      const response = await API.get('/api/Users/status');
+      return response.data;
+    } catch (error) {
+      console.error('Error checking user status:', error);
+      if (axios.isAxiosError(error)) {
+        return {
+          isSuccess: false,
+          message: error.response?.data?.message || 'Failed to check user status',
+          statusCode: error.response?.status || 500,
+          data: { isActive: true } // Default to active in case of error
+        };
+      }
+      return {
+        isSuccess: false,
+        message: 'An error occurred while checking user status',
+        statusCode: 500,
+        data: { isActive: true }
+      };
+    }
+  },
 };
 
 export default API; 

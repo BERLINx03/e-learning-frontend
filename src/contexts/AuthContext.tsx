@@ -121,6 +121,56 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  // Add periodic status check for ban/timeout
+  useEffect(() => {
+    if (!user) return;
+    
+    // Function to check user status
+    const checkUserStatus = async () => {
+      try {
+        const statusResponse = await UserAPI.checkUserStatus();
+        
+        if (statusResponse.isSuccess && statusResponse.data) {
+          // If user is not active (banned or timed out)
+          if (!statusResponse.data.isActive || statusResponse.data.isBanned || 
+              (statusResponse.data.timeoutUntil && new Date(statusResponse.data.timeoutUntil) > new Date())) {
+            console.warn('User account is no longer active:', statusResponse.data);
+            
+            // Prepare an appropriate message
+            let errorMessage = 'Your account has been deactivated.';
+            
+            if (statusResponse.data.isBanned) {
+              errorMessage = 'Your account has been banned. Please contact support.';
+            } else if (statusResponse.data.timeoutUntil) {
+              const timeoutDate = new Date(statusResponse.data.timeoutUntil);
+              errorMessage = `Your account has been suspended until ${timeoutDate.toLocaleString()}.`;
+            }
+            
+            // Force logout
+            localStorage.removeItem('token');
+            localStorage.removeItem('userData');
+            delete API.defaults.headers.common['Authorization'];
+            setUser(null);
+            
+            // Redirect to login with appropriate message
+            window.location.href = `/login?error=${encodeURIComponent(errorMessage)}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking user status:', error);
+      }
+    };
+    
+    // Initial check on component mount
+    checkUserStatus();
+    
+    // Set up periodic check every 5 minutes
+    const statusCheckInterval = setInterval(checkUserStatus, 5 * 60 * 1000);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(statusCheckInterval);
+  }, [user]);
+
   const fetchUserProfile = async () => {
     try {
       console.log('Fetching user profile from API...');

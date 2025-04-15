@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Login: React.FC = () => {
@@ -11,6 +11,51 @@ const Login: React.FC = () => {
   
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for error message in URL query parameters (for redirects from ban/timeout detection)
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const errorMessage = queryParams.get('error');
+    
+    if (errorMessage) {
+      // Set the error message from URL
+      if (errorMessage.includes('banned')) {
+        setError(
+          <div>
+            <p className="font-medium mb-2">{errorMessage}</p>
+            <p className="text-sm">
+              Please contact support at{' '}
+              <a href="mailto:abdallahelsokkary4399@gmail.com" className="text-accent hover:underline">
+                abdallahelsokkary4399@gmail.com
+              </a>
+            </p>
+          </div>
+        );
+      } else if (errorMessage.includes('suspended') || errorMessage.includes('timeout')) {
+        // Extract the suspension end date from the message if it exists
+        const dateMatch = errorMessage.match(/until\s+([^\.]+)/);
+        if (dateMatch) {
+          setError(
+            <div>
+              <p className="font-medium mb-2">{errorMessage}</p>
+              <p className="text-sm">
+                Your account will be automatically reactivated on {dateMatch[1]}.
+              </p>
+            </div>
+          );
+        } else {
+          setError(errorMessage);
+        }
+      } else {
+        setError(errorMessage);
+      }
+      
+      // Clear the URL parameter without refreshing the page
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
