@@ -16,6 +16,7 @@ const LessonDetails: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
   const [lessonProgress, setLessonProgress] = useState<Progress | null>(null);
+  const [courseProgress, setCourseProgress] = useState<number>(0);
 
   useEffect(() => {
     if (id) {
@@ -36,9 +37,10 @@ const LessonDetails: React.FC = () => {
         // Check lesson progress
         await fetchLessonProgress(lessonId);
         
-        // If the lesson belongs to a course, fetch course lessons
+        // If the lesson belongs to a course, fetch course lessons and progress
         if (response.data.courseId) {
           await fetchCourseLessons(response.data.courseId, lessonId);
+          await fetchCourseProgress(response.data.courseId);
         }
       } else {
         setError(response.message || 'Failed to fetch lesson');
@@ -61,6 +63,17 @@ const LessonDetails: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching lesson progress:', error);
+    }
+  };
+
+  const fetchCourseProgress = async (courseId: number) => {
+    try {
+      const progressResponse = await CourseAPI.getCourseProgress(courseId);
+      if (progressResponse.isSuccess && progressResponse.data !== undefined) {
+        setCourseProgress(progressResponse.data);
+      }
+    } catch (error) {
+      console.error('Error fetching course progress:', error);
     }
   };
 
@@ -95,6 +108,11 @@ const LessonDetails: React.FC = () => {
         
         // Update lesson progress
         await fetchLessonProgress(lesson.id);
+        
+        // Update course progress
+        if (lesson.courseId) {
+          await fetchCourseProgress(lesson.courseId);
+        }
         
         // Auto-navigate to next lesson if available
         if (nextLesson) {
@@ -144,16 +162,28 @@ const LessonDetails: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Content - Left Side */}
           <div className="flex-1">
-            {/* Course Navigation */}
-            <div className="flex items-center mb-6">
-              <Link 
-                to={`/courses/${lesson?.courseId}`}
-                className="text-accent hover:text-accent-hover"
-              >
-                &larr; Back to Course
-              </Link>
+            {/* Course Navigation and Progress */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <Link 
+                  to={`/courses/${lesson?.courseId}`}
+                  className="text-accent hover:text-accent-hover"
+                >
+                  &larr; Back to Course
+                </Link>
+                
+                <div className="text-sm text-color-secondary">
+                  Course Progress: {courseProgress}%
+                </div>
+              </div>
               
-              <span className="mx-2 text-color-secondary">|</span>
+              {/* Progress bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                <div 
+                  className="bg-accent h-2.5 rounded-full transition-all duration-500 ease-out" 
+                  style={{ width: `${courseProgress}%` }}
+                ></div>
+              </div>
               
               <div className="flex items-center space-x-4">
                 <button

@@ -340,6 +340,23 @@ export const CourseAPI = {
     }
   },
 
+  // Get course progress percentage
+  getCourseProgress: async (courseId: number): Promise<ApiResponse<number>> => {
+    try {
+      const response = await API.get(`/api/Lessons/course/${courseId}/progress`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching progress for course ${courseId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch course progress',
+        errors: ['Network error while fetching course progress'],
+        statusCode: 500,
+        data: 0
+      };
+    }
+  },
+
   // Mark a lesson as completed
   markLessonAsCompleted: async (lessonId: number): Promise<ApiResponse<Progress>> => {
     try {
