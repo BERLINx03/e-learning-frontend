@@ -23,9 +23,8 @@ const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
     title: '',
     description: '',
     content: '',
-    videoUrl: '',
     documentUrl: '',
-    isQuiz: false
+    order: 1
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -62,29 +61,76 @@ const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
     try {
       setIsSubmitting(true);
       
-      // First create the lesson
+      // Create the lesson data exactly as the backend expects
       const lessonData = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
         courseId: Number(courseId),
-        order: 0, // This will be updated by the backend
+        documentUrl: formData.documentUrl || "", // Ensure we send empty string if no URL
+        isQuiz: false, // We'll handle quiz creation later
+        order: formData.order - 1 // Convert to 0-based for backend
       };
       
       const response = await CourseAPI.createLesson(lessonData);
       
       if (response.isSuccess && response.data) {
-        toast.success('Lesson created successfully!');
-        
         // If we have a video file, upload it
         if (videoFile && response.data.id) {
-          const videoResponse = await CourseAPI.addLessonVideo(response.data.id, courseId, videoFile);
-          
-          if (videoResponse.isSuccess) {
-            toast.success('Video uploaded successfully!');
-          } else {
-            toast.error(videoResponse.message || 'Failed to upload video');
+          try {
+            const formData = new FormData();
+            formData.append('video', videoFile);
+            
+            // Get the token from localStorage
+            const token = localStorage.getItem('token');
+            
+            const videoResponse = await fetch(`https://localhost:7104/api/Lessons/${response.data.id}/video/course/${courseId}`, {
+              method: 'PUT',
+              body: formData,
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (videoResponse.ok) {
+              const videoData = await videoResponse.text();
+              if (videoData) {
+                try {
+                  const parsedData = JSON.parse(videoData);
+                  if (parsedData.isSuccess) {
+                    toast.success('Video uploaded successfully!');
+                  } else {
+                    toast.error(parsedData.message || 'Failed to upload video');
+                  }
+                } catch (e) {
+                  // If response is not JSON, just show success if status was ok
+                  toast.success('Video uploaded successfully!');
+                }
+              } else {
+                toast.success('Video uploaded successfully!');
+              }
+            } else {
+              if (videoResponse.status === 401) {
+                toast.error('Unauthorized. Please log in again.');
+              } else {
+                const errorText = await videoResponse.text();
+                let errorMessage = 'Failed to upload video';
+                try {
+                  const errorData = JSON.parse(errorText);
+                  errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                  // If can't parse error response, use status text
+                  errorMessage = videoResponse.statusText || errorMessage;
+                }
+                toast.error(errorMessage);
+              }
+            }
+          } catch (error) {
+            console.error('Error uploading video:', error);
+            toast.error('Failed to upload video. Please try again.');
           }
         }
         
+        toast.success('Lesson created successfully!');
         if (onSuccess) {
           onSuccess(response.data);
         }
@@ -141,6 +187,25 @@ const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
             </div>
 
             <div>
+              <label htmlFor="order" className="block text-sm font-medium text-color-primary mb-1">
+                Lesson Order*
+              </label>
+              <input
+                type="number"
+                name="order"
+                id="order"
+                required
+                min="1"
+                value={formData.order}
+                onChange={handleInputChange}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+              <p className="mt-1 text-sm text-color-secondary">
+                Order determines the position of this lesson in the course (1 is first)
+              </p>
+            </div>
+
+            <div>
               <label htmlFor="video" className="block text-sm font-medium text-color-primary mb-1">
                 Video Upload
               </label>
@@ -167,7 +232,7 @@ const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
                 )}
               </div>
               <p className="mt-1 text-sm text-color-secondary">
-                Supported formats: MP4, WebM. Maximum size: 500MB
+                Supported formats: MP4, WebM
               </p>
             </div>
 
@@ -207,20 +272,6 @@ const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
               </p>
             </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="isQuiz"
-                id="isQuiz"
-                checked={formData.isQuiz}
-                onChange={handleInputChange}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="isQuiz" className="ml-2 block text-sm text-color-primary">
-                This is a quiz
-              </label>
-            </div>
-
             <div className="flex space-x-3">
               <button
                 type="submit"
@@ -242,7 +293,8 @@ const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-color-primary bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-color-primary bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>

@@ -19,7 +19,6 @@ import InstructorDashboard from './pages/instructor/Dashboard';
 import InstructorCourses from './pages/instructor/Courses';
 import CourseForm from './pages/instructor/CourseForm';
 import LessonManagement from './pages/instructor/lessons/LessonManagement';
-import NewLesson from './pages/instructor/lessons/NewLesson';
 import LessonDetails from './pages/lessons/LessonDetails';
 import Profile from './pages/Profile';
 import ProfileEdit from './pages/ProfileEdit';
@@ -81,7 +80,6 @@ function App() {
                     <Route path="/instructor/courses/create" element={<CourseForm />} />
                     <Route path="/instructor/courses/edit/:courseId" element={<CourseForm />} />
                     <Route path="/instructor/courses/:courseId/lessons" element={<LessonManagement />} />
-                    <Route path="/instructor/courses/:courseId/lessons/new" element={<NewLesson />} />
                   </Route>
                   
                   {/* Admin-only routes */}

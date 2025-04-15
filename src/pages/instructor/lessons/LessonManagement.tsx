@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CourseAPI, Lesson } from '../../../api/axios';
 import { toast } from 'react-hot-toast';
@@ -20,10 +20,15 @@ const LessonManagement: React.FC = () => {
     title: '',
     description: '',
     content: '',
-    videoUrl: '',
     documentUrl: '',
-    isQuiz: false
+    order: 0
   });
+
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Add loading state
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     fetchLessons();
@@ -71,10 +76,10 @@ const LessonManagement: React.FC = () => {
       title: '',
       description: '',
       content: '',
-      videoUrl: '',
       documentUrl: '',
-      isQuiz: false
+      order: lessons.length + 1
     });
+    setVideoFile(null);
     setIsCreating(true);
   };
 
@@ -84,10 +89,10 @@ const LessonManagement: React.FC = () => {
       title: lesson.title,
       description: lesson.description,
       content: lesson.content || '',
-      videoUrl: lesson.videoUrl || '',
       documentUrl: lesson.documentUrl || '',
-      isQuiz: lesson.isQuiz
+      order: lesson.order + 1
     });
+    setVideoFile(null);
     setIsCreating(false);
   };
 
@@ -108,16 +113,28 @@ const LessonManagement: React.FC = () => {
     }
   };
 
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setVideoFile(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!courseId) return;
     
     try {
+      setIsSubmitting(true); // Start loading
+      
+      // Create the lesson data exactly as the backend expects
       const lessonData = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
         courseId: Number(courseId),
-        order: isCreating ? lessons.length : selectedLesson?.order || 0
+        documentUrl: formData.documentUrl || "",
+        isQuiz: false,
+        order: formData.order - 1
       };
       
       let response;
@@ -125,7 +142,62 @@ const LessonManagement: React.FC = () => {
       if (isCreating) {
         // Create new lesson
         response = await CourseAPI.createLesson(lessonData);
-        if (response.isSuccess) {
+        if (response.isSuccess && response.data) {
+          // If we have a video file, upload it
+          if (videoFile) {
+            try {
+              const formData = new FormData();
+              formData.append('video', videoFile);
+              
+              // Get the token from localStorage
+              const token = localStorage.getItem('token');
+              
+              const videoResponse = await fetch(`https://localhost:7104/api/Lessons/${response.data.id}/video/course/${courseId}`, {
+                method: 'PUT',
+                body: formData,
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              
+              if (videoResponse.ok) {
+                const videoData = await videoResponse.text();
+                if (videoData) {
+                  try {
+                    const parsedData = JSON.parse(videoData);
+                    if (parsedData.isSuccess) {
+                      toast.success('Video uploaded successfully!');
+                    } else {
+                      toast.error(parsedData.message || 'Failed to upload video');
+                    }
+                  } catch (e) {
+                    // If response is not JSON, just show success if status was ok
+                    toast.success('Video uploaded successfully!');
+                  }
+                } else {
+                  toast.success('Video uploaded successfully!');
+                }
+              } else {
+                if (videoResponse.status === 401) {
+                  toast.error('Unauthorized. Please log in again.');
+                } else {
+                  const errorText = await videoResponse.text();
+                  let errorMessage = 'Failed to upload video';
+                  try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.message || errorMessage;
+                  } catch (e) {
+                    // If can't parse error response, use status text
+                    errorMessage = videoResponse.statusText || errorMessage;
+                  }
+                  toast.error(errorMessage);
+                }
+              }
+            } catch (error) {
+              console.error('Error uploading video:', error);
+              toast.error('Failed to upload video. Please try again.');
+            }
+          }
           toast.success('Lesson created successfully!');
           setIsCreating(false);
         }
@@ -133,6 +205,61 @@ const LessonManagement: React.FC = () => {
         // Update existing lesson
         response = await CourseAPI.updateLesson(selectedLesson.id, lessonData);
         if (response.isSuccess) {
+          // If we have a new video file, upload it
+          if (videoFile) {
+            try {
+              const formData = new FormData();
+              formData.append('video', videoFile);
+              
+              // Get the token from localStorage
+              const token = localStorage.getItem('token');
+              
+              const videoResponse = await fetch(`https://localhost:7104/api/Lessons/${selectedLesson.id}/video/course/${courseId}`, {
+                method: 'PUT',
+                body: formData,
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              
+              if (videoResponse.ok) {
+                const videoData = await videoResponse.text();
+                if (videoData) {
+                  try {
+                    const parsedData = JSON.parse(videoData);
+                    if (parsedData.isSuccess) {
+                      toast.success('Video updated successfully!');
+                    } else {
+                      toast.error(parsedData.message || 'Failed to update video');
+                    }
+                  } catch (e) {
+                    // If response is not JSON, just show success if status was ok
+                    toast.success('Video updated successfully!');
+                  }
+                } else {
+                  toast.success('Video updated successfully!');
+                }
+              } else {
+                if (videoResponse.status === 401) {
+                  toast.error('Unauthorized. Please log in again.');
+                } else {
+                  const errorText = await videoResponse.text();
+                  let errorMessage = 'Failed to update video';
+                  try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.message || errorMessage;
+                  } catch (e) {
+                    // If can't parse error response, use status text
+                    errorMessage = videoResponse.statusText || errorMessage;
+                  }
+                  toast.error(errorMessage);
+                }
+              }
+            } catch (error) {
+              console.error('Error updating video:', error);
+              toast.error('Failed to update video. Please try again.');
+            }
+          }
           toast.success('Lesson updated successfully!');
         }
       }
@@ -143,6 +270,8 @@ const LessonManagement: React.FC = () => {
     } catch (error) {
       console.error('Error saving lesson:', error);
       toast.error('Failed to save lesson. Please try again.');
+    } finally {
+      setIsSubmitting(false); // End loading
     }
   };
 
@@ -277,16 +406,7 @@ const LessonManagement: React.FC = () => {
             <svg className="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Create Lesson
-          </button>
-          <button
-            onClick={() => navigate(`/instructor/courses/${courseId}/lessons/new`)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
-            <svg className="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            Create Video Lesson
+            Add Lesson
           </button>
         </div>
       </div>
@@ -327,11 +447,7 @@ const LessonManagement: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex items-center">
-                      {lesson.isQuiz ? (
-                        <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
-                          Quiz
-                        </span>
-                      ) : lesson.videoUrl ? (
+                      {lesson.videoUrl ? (
                         <span className="text-xs px-2 py-1 rounded-full bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200">
                           Video
                         </span>
@@ -393,20 +509,53 @@ const LessonManagement: React.FC = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="videoUrl" className="block text-sm font-medium text-color-primary mb-1">
-                        Video URL (optional)
+                      <label htmlFor="order" className="block text-sm font-medium text-color-primary mb-1">
+                        Lesson Order*
                       </label>
                       <input
-                        type="url"
-                        name="videoUrl"
-                        id="videoUrl"
-                        value={formData.videoUrl}
+                        type="number"
+                        name="order"
+                        id="order"
+                        required
+                        min="1"
+                        max={lessons.length + 1}
+                        value={formData.order}
                         onChange={handleInputChange}
                         className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="https://example.com/video.mp4"
                       />
                       <p className="mt-1 text-sm text-color-secondary">
-                        Enter a direct link to your video file (MP4, WebM)
+                        Order determines the position of this lesson in the course (1 is first)
+                      </p>
+                    </div>
+
+                    <div>
+                      <label htmlFor="video" className="block text-sm font-medium text-color-primary mb-1">
+                        Video Upload
+                      </label>
+                      <div className="flex items-center">
+                        <input
+                          type="file"
+                          id="video"
+                          ref={fileInputRef}
+                          accept="video/mp4,video/webm"
+                          onChange={handleVideoChange}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-color-primary bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          {videoFile ? 'Change Video' : 'Select Video'}
+                        </button>
+                        {videoFile && (
+                          <span className="ml-3 text-sm text-color-secondary">
+                            {videoFile.name}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm text-color-secondary">
+                        Supported formats: MP4, WebM
                       </p>
                     </div>
 
@@ -446,27 +595,24 @@ const LessonManagement: React.FC = () => {
                       </p>
                     </div>
 
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="isQuiz"
-                        id="isQuiz"
-                        checked={formData.isQuiz}
-                        onChange={handleInputChange}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <label htmlFor="isQuiz" className="ml-2 block text-sm text-color-primary">
-                        This is a quiz
-                      </label>
-                    </div>
-
                     <div className="flex justify-between">
                       <div className="flex space-x-3">
                         <button
                           type="submit"
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          disabled={isSubmitting}
+                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {selectedLesson ? 'Update Lesson' : 'Create Lesson'}
+                          {isSubmitting ? (
+                            <>
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              {selectedLesson ? 'Updating...' : 'Creating...'}
+                            </>
+                          ) : (
+                            selectedLesson ? 'Update Lesson' : 'Create Lesson'
+                          )}
                         </button>
                         <button
                           type="button"
@@ -474,7 +620,8 @@ const LessonManagement: React.FC = () => {
                             setSelectedLesson(null);
                             setIsCreating(false);
                           }}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-color-primary bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          disabled={isSubmitting}
+                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-color-primary bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Cancel
                         </button>
@@ -483,7 +630,8 @@ const LessonManagement: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleDeleteLesson(selectedLesson.id)}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          disabled={isSubmitting}
+                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <svg className="w-4 h-4 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
