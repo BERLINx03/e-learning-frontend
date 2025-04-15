@@ -86,9 +86,7 @@ const InstructorDashboard: React.FC = () => {
   };
 
   const handleManageLessons = (courseId: number) => {
-    setSelectedCourseId(courseId);
-    setActiveTab('courses');
-    setActiveSubTab('lessons');
+    navigate(`/instructor/courses/${courseId}/lessons`);
   };
 
   const handleStudentProgress = (courseId: number) => {
