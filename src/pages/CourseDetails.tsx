@@ -602,6 +602,78 @@ const CourseDetails: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Course Messages */}
+        <div className="mt-12">
+          <div className="bg-card rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-color-primary mb-6">Course Messages</h2>
+            
+            {course.messages && course.messages.length > 0 ? (
+              <div className="space-y-6">
+                {course.messages.map((message) => (
+                  <div key={message.id} className="flex items-start space-x-4 p-4 bg-primary rounded-lg">
+                    <div className="flex-shrink-0">
+                      <img
+                        src={message.instructor.profilePictureUrl || '/default-avatar.png'}
+                        alt={`${message.instructor.firstName} ${message.instructor.lastName}`}
+                        className="h-10 w-10 rounded-full object-cover"
+                        onError={(e) => handleImageError(`message-${message.id}`)}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-color-primary">
+                          {message.instructor.firstName} {message.instructor.lastName}
+                        </p>
+                        <span className="text-xs text-color-secondary">
+                          {new Date(message.sentAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-color-secondary">{message.message}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <svg className="mx-auto h-12 w-12 text-color-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <p className="mt-2 text-sm text-color-secondary">No messages yet</p>
+              </div>
+            )}
+
+            {/* Message Input */}
+            {(isInstructor || isUserEnrolled) && (
+              <div className="mt-6">
+                <form onSubmit={handleSendMessage} className="flex items-start space-x-4">
+                  <div className="flex-1">
+                    <textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type your message..."
+                      className="w-full px-4 py-2 text-sm text-color-primary bg-primary border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                      rows={3}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!newMessage.trim()}
+                    className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Send
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
