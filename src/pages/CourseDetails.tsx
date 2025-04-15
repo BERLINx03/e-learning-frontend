@@ -560,8 +560,8 @@ const CourseDetails: React.FC = () => {
           <div className="lg:col-span-3">
             <CourseContent
               courseId={Number(id)}
-              isEnrolled={enrollmentStatus?.isEnrolled}
-              isInstructor={course?.instructorId === user?.id}
+              isEnrolled={isInstructor || enrollmentStatus?.isEnrolled}
+              isInstructor={isInstructor}
             />
           </div>
         </div>

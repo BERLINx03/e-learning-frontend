@@ -224,7 +224,7 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
             </div>
           </div>
           
-          {isEnrolled && (
+          {isEnrolled && !isInstructor && (
             <div className="mt-4">
               <button
                 onClick={handleUnenroll}
