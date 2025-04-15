@@ -23,6 +23,7 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
   const [checkingEnrollment, setCheckingEnrollment] = useState<boolean>(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [courseProgress, setCourseProgress] = useState<number>(0);
 
   const isEnrolled = propIsEnrolled !== undefined ? propIsEnrolled : hasAccess || enrollmentStatus?.isEnrolled || false;
 
@@ -30,6 +31,7 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
     fetchLessons();
     if (user) {
       checkEnrollmentStatus();
+      fetchCourseProgress();
     }
   }, [courseId, user]);
 
@@ -75,6 +77,17 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
       setError('An error occurred while fetching lessons');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCourseProgress = async () => {
+    try {
+      const response = await CourseAPI.getCourseProgress(courseId);
+      if (response.isSuccess && response.data !== undefined) {
+        setCourseProgress(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching course progress:', error);
     }
   };
 
@@ -195,39 +208,68 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
 
   return (
     <div className="my-8">
-      <h2 className="text-2xl font-bold text-color-primary mb-6">Course Content</h2>
-      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Course Content - Left Side */}
         <div className="lg:col-span-1">
-          <LessonList 
-            lessons={lessons} 
-            activeLessonId={activeLesson?.id || null}
-            onLessonSelect={handleLessonSelect}
-          />
+          <div className="bg-card rounded-lg overflow-hidden">
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-semibold text-color-primary">Course Content</h2>
+                <span className="text-sm font-medium text-color-primary">
+                  {Math.round(courseProgress)}% Complete
+                </span>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div 
+                  className="bg-accent h-2 rounded-full transition-all duration-500 ease-out" 
+                  style={{ width: `${courseProgress}%` }}
+                ></div>
+              </div>
+            </div>
+            <div className="custom-scrollbar max-h-[400px] overflow-y-auto">
+              <LessonList 
+                lessons={lessons} 
+                activeLessonId={activeLesson?.id || null}
+                onLessonSelect={handleLessonSelect}
+              />
+            </div>
+          </div>
+          
+          {isEnrolled && (
+            <div className="mt-4">
+              <button
+                onClick={handleUnenroll}
+                disabled={enrolling}
+                className="w-full px-4 py-2 text-sm text-danger hover:text-white hover:bg-danger/90 font-medium flex items-center justify-center rounded-lg border-2 border-danger transition-all duration-200"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                {enrolling ? 'Processing...' : 'Unenroll from course'}
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Lesson View - Right Side */}
         <div className="lg:col-span-2">
           {isEnrolled ? (
-            <>
-              <LessonView 
-                lesson={activeLesson} 
-                onLessonCompleted={handleLessonCompleted}
-              />
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={handleUnenroll}
-                  disabled={enrolling}
-                  className="text-sm text-red-500 hover:text-red-700 font-medium"
-                >
-                  {enrolling ? 'Processing...' : 'Unenroll from course'}
-                </button>
-              </div>
-            </>
+            <LessonView 
+              lesson={activeLesson} 
+              onLessonCompleted={() => {
+                handleLessonCompleted();
+                fetchCourseProgress();
+              }}
+            />
           ) : (
             <div className="bg-card rounded-lg shadow-sm p-6">
               <div className="flex flex-col items-center justify-center py-8">
-                <svg className="w-16 h-16 text-warning mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+                <div className="w-20 h-20 mb-6 rounded-full bg-warning/10 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
                 <h3 className="text-xl font-semibold text-color-primary mb-2">Course Content Locked</h3>
                 {isInstructor ? (
                   <p className="text-color-secondary text-center mb-6 max-w-md">
@@ -242,7 +284,7 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
                 <button
                   onClick={handleEnroll}
                   disabled={enrolling}
-                  className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {enrolling ? (
                     <span className="flex items-center justify-center">
