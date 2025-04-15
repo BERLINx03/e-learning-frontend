@@ -3,33 +3,21 @@ import { Link } from 'react-router-dom';
 import { CourseAPI, Course } from '../api/axios';
 
 const Home: React.FC = () => {
-  const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
   const [popularCourses, setPopularCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchFeaturedCourses();
+    fetchPopularCourses();
   }, []);
 
-  const fetchFeaturedCourses = async () => {
+  const fetchPopularCourses = async () => {
     try {
       setIsLoading(true);
-      const response = await CourseAPI.getAllCourses();
+      const response = await CourseAPI.getTopEnrolledCourses(6);
       
       if (response.isSuccess && response.data) {
-        // Only show published courses
-        const publishedCourses = response.data.filter(course => course.isPublished);
-        
-        // Get up to 6 courses for featured section
-        setFeaturedCourses(publishedCourses.slice(0, 6));
-        
-        // Get top 3 courses with highest enrollment for popular section
-        const sortedByEnrollment = [...publishedCourses]
-          .sort((a, b) => (b.enrollments?.length || 0) - (a.enrollments?.length || 0))
-          .slice(0, 3);
-        
-        setPopularCourses(sortedByEnrollment);
+        setPopularCourses(response.data);
       } else {
         setError(response.message || 'Failed to fetch courses');
       }
@@ -71,10 +59,15 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Featured courses section */}
+      {/* Popular courses section */}
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-8">Featured Courses</h2>
-        
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-extrabold text-gray-900">Most Popular Courses</h2>
+          <Link to="/courses" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            View all courses
+          </Link>
+        </div>
+
         {error && (
           <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
             <div className="flex">
@@ -97,26 +90,34 @@ const Home: React.FC = () => {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           </div>
-        ) : featuredCourses.length === 0 ? (
+        ) : popularCourses.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
             <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
             <h3 className="mt-2 text-lg font-medium text-gray-900">No courses found</h3>
-            <p className="mt-1 text-gray-500">Check back later for our featured courses.</p>
+            <p className="mt-1 text-gray-500">Check back later for our popular courses.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredCourses.map((course) => (
+            {popularCourses.map((course) => (
               <div key={course.id} className="flex flex-col rounded-lg shadow-lg overflow-hidden">
                 <div className="flex-shrink-0">
                   <img className="h-48 w-full object-cover" src={course.thumbnailUrl || "https://via.placeholder.com/400x200?text=No+Image"} alt={course.title} />
                 </div>
                 <div className="flex-1 bg-white p-6 flex flex-col justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-600">
-                      {course.category}
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                        {course.category}
+                      </span>
+                      <span className="text-sm text-gray-500 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                        </svg>
+                        {course.studentCount} students
+                      </span>
+                    </div>
                     <Link to={`/courses/${course.id}`} className="block mt-2">
                       <p className="text-xl font-semibold text-gray-900">{course.title}</p>
                       <p className="mt-3 text-base text-gray-500">
@@ -126,23 +127,29 @@ const Home: React.FC = () => {
                       </p>
                     </Link>
                   </div>
-                  <div className="mt-6 flex items-center">
-                    <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                        <span className="text-white font-semibold">
-                          {course.instructor?.firstName?.[0] || 'I'}
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                          </svg>
+                          <span className="text-sm text-gray-500">{course.level}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.616a1 1 0 01.894-1.79l1.599.8L9 4.323V3a1 1 0 011-1zm-5 8.274l-.818 2.552c.25.112.526.174.818.174.292 0 .569-.062.818-.174L5 10.274zm10 0l-.818 2.552c.25.112.526.174.818.174.292 0 .569-.062.818-.174L15 10.274z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-sm text-gray-500">{course.lessonCount} lessons</span>
+                        </div>
+                      </div>
+                      {course.price === 0 ? (
+                        <span className="px-3 py-1 text-sm font-semibold text-green-700 bg-green-100 rounded-full border border-green-200">
+                          Free
                         </span>
-                      </div>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">
-                        {course.instructor?.firstName} {course.instructor?.lastName}
-                      </p>
-                      <div className="text-sm text-gray-500">
-                        <span>{course.level}</span>
-                        <span className="mx-1">•</span>
-                        <span>${course.price.toFixed(2)}</span>
-                      </div>
+                      ) : (
+                        <span className="text-lg font-bold text-gray-900">${course.price.toFixed(2)}</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -150,148 +157,6 @@ const Home: React.FC = () => {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Popular courses section */}
-      {!isLoading && popularCourses.length > 0 && (
-        <div className="bg-gray-50 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-extrabold text-gray-900">Popular Courses</h2>
-              <Link to="/courses" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                View all courses
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {popularCourses.map(course => (
-                <div key={course.id} className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
-                  <div className="relative aspect-video bg-gray-200">
-                    {course.thumbnailUrl ? (
-                      <img 
-                        src={course.thumbnailUrl} 
-                        alt={course.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-400 to-indigo-500 text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-75" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="absolute top-3 right-3 bg-blue-600 text-white rounded-full px-3 py-1 text-xs font-semibold">
-                      {course.level}
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center mb-2">
-                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{course.category}</span>
-                      <div className="ml-auto flex items-center text-yellow-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                        </svg>
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">{course.title}</h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{course.description}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        {course.instructor && (
-                          <span className="text-sm text-gray-500">by {course.instructor.firstName} {course.instructor.lastName}</span>
-                        )}
-                      </div>
-                      <div className="text-xl font-bold text-blue-600">${course.price.toFixed(2)}</div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center text-gray-500 text-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                          </svg>
-                          {course.enrollments?.length || 0} students
-                        </div>
-                        <Link
-                          to={`/courses/${course.id}`}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-300"
-                        >
-                          View Course
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Categories section */}
-      <div className="bg-gray-50">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Browse by Category
-            </h2>
-            <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
-              Find courses in your area of interest
-            </p>
-          </div>
-
-          {/* Category cards */}
-          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {['Web Development', 'Data Science', 'Design', 'Business'].map((category) => (
-              <div key={category} className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">{category}</h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Browse {category.toLowerCase()} courses
-                  </p>
-                  <div className="mt-4">
-                    <Link
-                      to={`/courses?category=${category.toLowerCase()}`}
-                      className="text-sm font-medium text-blue-600 hover:text-blue-500"
-                    >
-                      View courses <span aria-hidden="true">&rarr;</span>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Become an instructor CTA */}
-      <div className="bg-blue-700">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            <span className="block">Ready to share your knowledge?</span>
-            <span className="block text-blue-300">Become an instructor today.</span>
-          </h2>
-          <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-            <div className="inline-flex rounded-md shadow">
-              <Link
-                to="/register"
-                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

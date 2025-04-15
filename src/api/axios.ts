@@ -180,6 +180,22 @@ export const CourseAPI = {
     }
   },
   
+  // Get top enrolled courses
+  getTopEnrolledCourses: async (limit: number = 6): Promise<ApiResponse<Course[]>> => {
+    try {
+      const response = await API.get(`/api/Courses/top-enrolled?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching top enrolled courses:', error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch top enrolled courses',
+        errors: ['Network error while fetching top enrolled courses'],
+        statusCode: 500
+      };
+    }
+  },
+  
   // Search courses (client-side filtering should be implemented instead)
   searchCourses: async (
     searchTerm: string, 

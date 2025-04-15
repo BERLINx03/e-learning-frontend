@@ -378,6 +378,30 @@ const Courses: React.FC = () => {
                       {course.description}
                     </p>
                     
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                          </svg>
+                          <span className="text-sm text-gray-500">{course.level}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.616a1 1 0 01.894-1.79l1.599.8L9 4.323V3a1 1 0 011-1zm-5 8.274l-.818 2.552c.25.112.526.174.818.174.292 0 .569-.062.818-.174L5 10.274zm10 0l-.818 2.552c.25.112.526.174.818.174.292 0 .569-.062.818-.174L15 10.274z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-sm text-gray-500">{course.lessonCount} lessons</span>
+                        </div>
+                      </div>
+                      {course.price === 0 ? (
+                        <span className="px-3 py-1 text-sm font-semibold text-green-700 bg-green-100 rounded-full border border-green-200">
+                          Free
+                        </span>
+                      ) : (
+                        <span className="text-lg font-bold text-gray-900">${course.price.toFixed(2)}</span>
+                      )}
+                    </div>
+                    
                     <div className="mt-auto">
                       {course.instructor && (
                         <div className="flex items-center mb-3">
@@ -391,7 +415,6 @@ const Courses: React.FC = () => {
                       )}
                       
                       <div className="flex justify-between items-center pt-3 border-t border-primary">
-                        <div className="text-lg font-bold text-blue-500">${course.price.toFixed(2)}</div>
                         <Link
                           to={`/courses/${course.id}`}
                           className="text-blue-500 hover:text-blue-700 hover:underline text-sm font-medium transition-colors"

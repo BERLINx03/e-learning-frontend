@@ -503,9 +503,11 @@ const CourseDetails: React.FC = () => {
                     </div>
                     <div className="text-2xl font-bold">
                       {course.price === 0 ? (
-                        <span className="text-green-500">Free</span>
+                        <span className="px-3 py-1 text-sm font-semibold text-green-700 bg-green-100 rounded-full border border-green-200">
+                          Free
+                        </span>
                       ) : (
-                        <span className="text-accent">${course.price.toFixed(2)}</span>
+                        <span className="text-lg font-bold text-gray-900">${course.price.toFixed(2)}</span>
                       )}
                     </div>
                   </div>
