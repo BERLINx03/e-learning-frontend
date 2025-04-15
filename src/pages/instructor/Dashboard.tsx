@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import API, { CourseAPI, Course, Enrollment } from '../../api/axios';
+import API, { CourseAPI, Course } from '../../api/axios';
 
 // Define types for our data
-type CourseWithEnrollments = Course & {
-  enrollments: (Enrollment & { id: number; studentId: number })[];
-}
-
 interface User {
   id: string;
   name: string;
   email: string;
   role: 'student' | 'instructor' | 'admin';
-  // Additional properties that might be available from the profile API
   firstName?: string;
   lastName?: string;
   profilePictureUrl?: string;
@@ -33,7 +28,7 @@ const InstructorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [activeSubTab, setActiveSubTab] = useState('list');
-  const [courses, setCourses] = useState<CourseWithEnrollments[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
@@ -58,25 +53,17 @@ const InstructorDashboard: React.FC = () => {
   const fetchCourses = async () => {
     try {
       setIsLoading(true);
-      const response = await CourseAPI.getAllCourses();
+      const response = await CourseAPI.getMyCourses();
       
       if (response.isSuccess && response.data) {
-        // Convert instructorId to string for comparison if needed
-        const userId = typeof user?.id === 'number' ? user.id.toString() : user?.id;
-
-        // Filter courses by instructor ID on frontend
-        const instructorCourses = response.data.filter(
-          (course) => course.instructorId === user?.id || course.instructorId.toString() === userId
-        ) as CourseWithEnrollments[];
+        setCourses(response.data);
         
-        setCourses(instructorCourses);
-        
-        // Update stats
+        // Update stats using the new response format
         setStats({
-          totalCourses: instructorCourses.length,
-          totalStudents: calculateTotalStudents(instructorCourses), // Calculate from enrollments
-          totalLessons: calculateTotalLessons(instructorCourses), // Calculate from lessons
-          totalEarnings: calculateTotalEarnings(instructorCourses) // Calculate from course prices
+          totalCourses: response.data.length,
+          totalStudents: response.data.reduce((total, course) => total + course.studentCount, 0),
+          totalLessons: response.data.reduce((total, course) => total + course.lessonCount, 0),
+          totalEarnings: response.data.reduce((total, course) => total + (course.price * course.studentCount), 0)
         });
       } else {
         setError(response.message || 'Failed to fetch courses');
@@ -88,21 +75,6 @@ const InstructorDashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const calculateTotalStudents = (courses: CourseWithEnrollments[]): number => {
-    return courses.reduce((total, course) => total + (course.enrollments?.length || 0), 0);
-  };
-
-  const calculateTotalLessons = (courses: CourseWithEnrollments[]): number => {
-    return courses.reduce((total, course) => total + (course.lessons?.length || 0), 0);
-  };
-
-  const calculateTotalEarnings = (courses: CourseWithEnrollments[]): number => {
-    return courses.reduce((total, course) => {
-      const enrollmentCount = course.enrollments?.length || 0;
-      return total + (course.price * enrollmentCount);
-    }, 0);
   };
 
   const handleCreateCourse = () => {
@@ -332,7 +304,7 @@ const InstructorDashboard: React.FC = () => {
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
-                            <span>{course.enrollments?.length || 0} students</span>
+                            <span>{course.studentCount} students</span>
                           </div>
                         </div>
                       </div>

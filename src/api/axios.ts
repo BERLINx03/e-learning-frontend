@@ -116,6 +116,8 @@ export interface Course {
   lessons?: Lesson[];
   enrollments?: Enrollment[];
   messages?: CourseMessage[];
+  studentCount: number;
+  lessonCount: number;
 }
 
 const API = axios.create({
@@ -542,7 +544,7 @@ export const CourseAPI = {
     }
   },
   
-  // Get current user's enrolled courses
+  // Get current user's courses (for instructor dashboard)
   getMyCourses: async (): Promise<ApiResponse<Course[]>> => {
     try {
       console.log('Calling /api/Courses/my-courses endpoint');
