@@ -308,16 +308,18 @@ const LessonDetails: React.FC = () => {
           </div>
 
           {/* Lesson List - Right Side */}
-          <div className="w-full lg:w-1/4 bg-card rounded-lg overflow-hidden">
-            <h2 className="text-xl font-semibold p-4 border-b border-border">Course Content</h2>
-            <div className="custom-scrollbar max-h-[calc(100vh-12rem)] overflow-y-auto">
-              <LessonList
-                lessons={courseLessons}
-                activeLessonId={lesson?.id || null}
-                onLessonSelect={(selectedLesson) => {
-                  navigate(`/lessons/${selectedLesson.id}`);
-                }}
-              />
+          <div className="w-full lg:w-1/4">
+            <div className="bg-card rounded-lg overflow-hidden">
+              <h2 className="text-xl font-semibold p-4 border-b border-border">Course Content</h2>
+              <div className="custom-scrollbar max-h-[400px] overflow-y-auto">
+                <LessonList
+                  lessons={courseLessons}
+                  activeLessonId={lesson?.id || null}
+                  onLessonSelect={(selectedLesson) => {
+                    navigate(`/lessons/${selectedLesson.id}`);
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

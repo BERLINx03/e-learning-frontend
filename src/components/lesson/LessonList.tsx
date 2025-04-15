@@ -10,9 +10,6 @@ interface LessonListProps {
 const LessonList: React.FC<LessonListProps> = ({ lessons, activeLessonId, onLessonSelect }) => {
   return (
     <div className="bg-card rounded-lg shadow-sm">
-      <div className="p-4 border-b border-primary">
-        <h3 className="text-lg font-medium text-color-primary">Course Content</h3>
-      </div>
       <div className="divide-y divide-gray-200">
         {lessons.map((lesson) => (
           <div 
