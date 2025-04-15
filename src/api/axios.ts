@@ -305,7 +305,11 @@ export const CourseAPI = {
   uploadThumbnail: async (courseId: number, thumbnailFile: File): Promise<ApiResponse<string>> => {
     try {
       const formData = new FormData();
+      
+      // Try both common field names as we're not sure which one the API expects
       formData.append('file', thumbnailFile);
+      formData.append('thumbnail', thumbnailFile);
+      formData.append('image', thumbnailFile);
       
       console.log('Uploading thumbnail for course ID:', courseId);
       console.log('File details:', {
@@ -314,15 +318,28 @@ export const CourseAPI = {
         size: thumbnailFile.size,
       });
       
+      // Set headers explicitly but with undefined for Content-Type to let Axios set the boundary
       const response = await API.post<ApiResponse<string>>(
         `/api/Courses/${courseId}/thumbnail`,
-        formData
+        formData,
+        {
+          headers: {
+            'Content-Type': undefined,  // Let Axios set the proper multipart content type
+            'Accept': 'application/json'
+          }
+        }
       );
       
       console.log('Thumbnail upload response:', response.data);
       return response.data;
     } catch (error) {
       console.error(`Failed to upload thumbnail for course ${courseId}:`, error);
+      if (axios.isAxiosError(error)) {
+        console.log('Response headers:', error.response?.headers);
+        console.log('Response data:', error.response?.data);
+        console.log('Status code:', error.response?.status);
+      }
+      
       return {
         isSuccess: false,
         message: 'Failed to upload thumbnail',
@@ -721,8 +738,13 @@ export const CourseAPI = {
 
   updateCourseThumbnail: async (courseId: number, thumbnailFile: File) => {
     try {
+      // First try the Axios approach
       const formData = new FormData();
+      
+      // Try both common field names as we're not sure which one the API expects
       formData.append('file', thumbnailFile);
+      formData.append('thumbnail', thumbnailFile);
+      formData.append('image', thumbnailFile);
       
       console.log('Uploading thumbnail for course ID:', courseId);
       console.log('File details:', {
@@ -731,15 +753,99 @@ export const CourseAPI = {
         size: thumbnailFile.size,
       });
 
-      const response = await API.put(
-        `/api/Courses/${courseId}/thumbnail`,
-        formData
-      );
-      
-      console.log('Thumbnail upload response:', response.data);
-      return response.data;
+      try {
+        // Try first with Axios
+        const response = await API.put(
+          `/api/Courses/${courseId}/thumbnail`,
+          formData,
+          {
+            headers: {
+              'Content-Type': undefined,  // Let Axios set the proper multipart content type
+              'Accept': 'application/json'
+            }
+          }
+        );
+        
+        console.log('Thumbnail upload response:', response.data);
+        return response.data;
+      } catch (axiosError) {
+        console.warn('Axios upload failed, trying XMLHttpRequest approach:', axiosError);
+        
+        // If Axios fails, try XMLHttpRequest as fallback
+        return new Promise((resolve) => {
+          const xhr = new XMLHttpRequest();
+          
+          xhr.open('PUT', `https://localhost:7104/api/Courses/${courseId}/thumbnail`, true);
+          
+          // Add authorization header
+          const token = localStorage.getItem('token');
+          if (token) {
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          }
+          
+          xhr.onload = function() {
+            console.log('XHR Upload complete - status:', xhr.status);
+            
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const responseData = JSON.parse(xhr.responseText);
+                console.log('Parsed XHR response:', responseData);
+                resolve({
+                  isSuccess: true,
+                  message: 'Thumbnail uploaded successfully',
+                  data: responseData.data
+                });
+              } catch (e) {
+                console.error('Error parsing XHR response:', e);
+                resolve({
+                  isSuccess: true,
+                  message: 'Thumbnail uploaded successfully but could not parse response',
+                  data: xhr.responseText
+                });
+              }
+            } else {
+              console.error('XHR Server returned error status:', xhr.status);
+              resolve({
+                isSuccess: false,
+                message: `Server error: ${xhr.statusText || 'Unknown error'}`,
+                errors: [`Status code: ${xhr.status}`]
+              });
+            }
+          };
+          
+          xhr.onerror = function() {
+            console.error('XHR Network Error');
+            resolve({
+              isSuccess: false,
+              message: 'Network error while uploading thumbnail',
+              errors: ['XHR request failed']
+            });
+          };
+          
+          xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+              const percent = (e.loaded / e.total) * 100;
+              console.log(`Upload progress: ${percent.toFixed(1)}%`);
+            }
+          };
+          
+          // Create and send FormData
+          const xhrFormData = new FormData();
+          xhrFormData.append('file', thumbnailFile); 
+          xhrFormData.append('thumbnail', thumbnailFile);
+          xhrFormData.append('image', thumbnailFile);
+          
+          xhr.send(xhrFormData);
+        });
+      }
     } catch (error) {
       console.error('Error updating course thumbnail:', error);
+      if (axios.isAxiosError(error)) {
+        console.log('Response headers:', error.response?.headers);
+        console.log('Response data:', error.response?.data);
+        console.log('Status code:', error.response?.status);
+      }
+      
       return {
         isSuccess: false,
         message: 'Failed to update course thumbnail',
