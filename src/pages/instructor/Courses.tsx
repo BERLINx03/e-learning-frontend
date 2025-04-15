@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { CourseAPI, Course, Enrollment } from '../../api/axios';
-
-// Define types for our data
-type CourseWithEnrollments = Course & {
-  enrollments: (Enrollment & { id: number; studentId: number })[];
-}
+import { CourseAPI, Course } from '../../api/axios';
 
 const InstructorCourses: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [allCourses, setAllCourses] = useState<CourseWithEnrollments[]>([]);
+  const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -33,18 +28,10 @@ const InstructorCourses: React.FC = () => {
   const fetchCourses = async () => {
     try {
       setIsLoading(true);
-      const response = await CourseAPI.getAllCourses();
+      const response = await CourseAPI.getMyCourses();
       
       if (response.isSuccess && response.data) {
-        // Convert instructorId to string for comparison if needed
-        const userId = typeof user?.id === 'number' ? user.id.toString() : user?.id;
-
-        // Filter courses by instructor ID on frontend
-        const instructorCourses = response.data.filter(
-          (course) => course.instructorId === user?.id || course.instructorId.toString() === userId
-        ) as CourseWithEnrollments[];
-        
-        setAllCourses(instructorCourses);
+        setAllCourses(response.data);
       } else {
         setError(response.message || 'Failed to fetch courses');
         console.error('Failed to fetch courses:', response.message);
@@ -86,27 +73,11 @@ const InstructorCourses: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (courseId: number, course: CourseWithEnrollments) => {
+  const handleToggleStatus = async (courseId: number, course: Course) => {
     try {
-      // Toggle the isPublished status
-      const newStatus = !course.isPublished;
-      
-      // Create a copy of the course data with all required fields
-      const updatedCourse = {
-        title: course.title,
-        description: course.description,
-        category: course.category,
-        level: course.level,
-        language: course.language || 'English', // Include language field
-        whatYouWillLearn: course.whatYouWillLearn || [], // Include whatYouWillLearn field
-        thisCourseInclude: course.thisCourseInclude || [], // Include thisCourseInclude field
-        duration: course.duration || 0, // Include duration field
-        price: course.price,
-        thumbnailUrl: course.thumbnailUrl || '',
-        isPublished: newStatus
-      };
-      
-      const response = await CourseAPI.updateCourse(courseId, updatedCourse);
+      const response = await CourseAPI.updateCourse(courseId, { 
+        isPublished: !course.isPublished 
+      });
       
       if (response.isSuccess) {
         // Refresh course list
@@ -182,7 +153,7 @@ const InstructorCourses: React.FC = () => {
   // Calculate stats
   const publishedCoursesCount = allCourses.filter(course => course.isPublished).length;
   const draftCoursesCount = allCourses.length - publishedCoursesCount;
-  const totalStudents = allCourses.reduce((sum, course) => sum + (course.enrollments?.length || 0), 0);
+  const totalStudents = allCourses.reduce((sum, course) => sum + course.studentCount, 0);
 
   return (
     <div className="min-h-screen bg-primary">
@@ -323,6 +294,7 @@ const InstructorCourses: React.FC = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Course</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Students</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Lessons</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Created</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-secondary uppercase tracking-wider">Price</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-secondary uppercase tracking-wider">Actions</th>
@@ -333,29 +305,21 @@ const InstructorCourses: React.FC = () => {
                       <tr key={course.id} className="hover:bg-secondary hover:bg-opacity-10">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="h-10 w-10 flex-shrink-0 bg-secondary rounded-md overflow-hidden">
-                              {course.thumbnailUrl ? (
-                                <img src={course.thumbnailUrl} alt={course.title} className="h-10 w-10 object-cover" />
-                              ) : (
-                                <div className="h-10 w-10 flex items-center justify-center">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                  </svg>
-                                </div>
-                              )}
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <img 
+                                className="h-10 w-10 rounded-lg object-cover" 
+                                src={course.thumbnailUrl || '/default-course-thumbnail.jpg'} 
+                                alt={course.title} 
+                              />
                             </div>
-                            <div className="ml-4 max-w-xs">
-                              <div className="text-sm font-medium text-primary truncate" title={course.title}>
-                                {course.title}
-                              </div>
-                              <div className="text-sm text-secondary truncate">
-                                {course.category} • {course.level}
-                              </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-primary">{course.title}</div>
+                              <div className="text-sm text-secondary">{course.category}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             course.isPublished 
                               ? 'bg-success bg-opacity-10 text-success' 
                               : 'bg-warning bg-opacity-10 text-warning'
@@ -364,7 +328,10 @@ const InstructorCourses: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
-                          {course.enrollments?.length || 0}
+                          {course.studentCount}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
+                          {course.lessonCount}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                           {formatDate(course.createdAt)}
@@ -373,48 +340,34 @@ const InstructorCourses: React.FC = () => {
                           ${course.price.toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex space-x-2 justify-end">
+                          <div className="flex justify-end space-x-3">
+                            <button
+                              onClick={() => handleToggleStatus(course.id, course)}
+                              className={`${
+                                course.isPublished 
+                                  ? 'text-warning hover:text-warning-dark' 
+                                  : 'text-success hover:text-success-dark'
+                              } transition-colors duration-200`}
+                            >
+                              {course.isPublished ? 'Unpublish' : 'Publish'}
+                            </button>
                             <button
                               onClick={() => handleEditCourse(course.id)}
                               className="text-accent hover:text-accent-dark"
-                              title="Edit course"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                              </svg>
+                              Edit
                             </button>
                             <button
                               onClick={() => handleManageLessons(course.id)}
-                              className="text-accent hover:text-accent-dark"
-                              title="Manage lessons"
+                              className="text-primary hover:text-accent"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleToggleStatus(course.id, course)}
-                              className={`${course.isPublished ? 'text-warning' : 'text-success'} hover:text-opacity-80`}
-                              title={course.isPublished ? 'Unpublish course' : 'Publish course'}
-                            >
-                              {course.isPublished ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
-                                </svg>
-                              ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                              )}
+                              Lessons
                             </button>
                             <button
                               onClick={() => handleDeleteCourse(course.id)}
                               className="text-danger hover:text-danger-dark"
-                              title="Delete course"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                              </svg>
+                              Delete
                             </button>
                           </div>
                         </td>
