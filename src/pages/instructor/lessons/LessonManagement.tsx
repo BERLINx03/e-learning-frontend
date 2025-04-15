@@ -131,7 +131,6 @@ const LessonManagement: React.FC = () => {
       const lessonData = {
         title: formData.title,
         description: formData.description,
-        courseId: Number(courseId),
         documentUrl: formData.documentUrl || "",
         isQuiz: false,
         order: formData.order - 1
