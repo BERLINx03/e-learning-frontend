@@ -324,10 +324,26 @@ export const CourseAPI = {
     }
   },
 
+  // Get lesson progress for a specific lesson
+  getLessonProgress: async (lessonId: number): Promise<ApiResponse<Progress>> => {
+    try {
+      const response = await API.get(`/api/Lessons/${lessonId}/progress`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching progress for lesson ${lessonId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch lesson progress',
+        errors: ['Network error while fetching lesson progress'],
+        statusCode: 500
+      };
+    }
+  },
+
   // Mark a lesson as completed
   markLessonAsCompleted: async (lessonId: number): Promise<ApiResponse<Progress>> => {
     try {
-      const response = await API.post(`/api/Progress/${lessonId}/complete`);
+      const response = await API.post(`/api/Lessons/${lessonId}/complete`);
       return response.data;
     } catch (error) {
       console.error(`Error marking lesson ${lessonId} as completed:`, error);
