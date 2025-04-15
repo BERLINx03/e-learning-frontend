@@ -305,18 +305,21 @@ export const CourseAPI = {
   uploadThumbnail: async (courseId: number, thumbnailFile: File): Promise<ApiResponse<string>> => {
     try {
       const formData = new FormData();
-      formData.append('thumbnail', thumbnailFile);
+      formData.append('file', thumbnailFile);
+      
+      console.log('Uploading thumbnail for course ID:', courseId);
+      console.log('File details:', {
+        name: thumbnailFile.name,
+        type: thumbnailFile.type,
+        size: thumbnailFile.size,
+      });
       
       const response = await API.post<ApiResponse<string>>(
         `/api/Courses/${courseId}/thumbnail`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        formData
       );
       
+      console.log('Thumbnail upload response:', response.data);
       return response.data;
     } catch (error) {
       console.error(`Failed to upload thumbnail for course ${courseId}:`, error);
@@ -719,17 +722,21 @@ export const CourseAPI = {
   updateCourseThumbnail: async (courseId: number, thumbnailFile: File) => {
     try {
       const formData = new FormData();
-      formData.append('thumbnail', thumbnailFile);
+      formData.append('file', thumbnailFile);
+      
+      console.log('Uploading thumbnail for course ID:', courseId);
+      console.log('File details:', {
+        name: thumbnailFile.name,
+        type: thumbnailFile.type,
+        size: thumbnailFile.size,
+      });
 
       const response = await API.put(
         `/api/Courses/${courseId}/thumbnail`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        formData
       );
+      
+      console.log('Thumbnail upload response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error updating course thumbnail:', error);
