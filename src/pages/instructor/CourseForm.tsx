@@ -531,7 +531,7 @@ const CourseForm: React.FC = () => {
           </div>
         </div>
 
-        <div className="col-span-6">
+        {/* <div className="col-span-6">
           <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700">
             Course Thumbnail
           </label>
@@ -566,7 +566,7 @@ const CourseForm: React.FC = () => {
           <p className="mt-2 text-sm text-gray-500">
             Upload a high-quality image for your course thumbnail. Recommended size 16:9 ratio.
           </p>
-        </div>
+        </div> */}
 
         <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
           <button
