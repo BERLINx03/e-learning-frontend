@@ -24,6 +24,14 @@ const LessonDetails: React.FC = () => {
     }
   }, [id]);
 
+  // Add this new useEffect to redirect to quiz view if the lesson is a quiz
+  useEffect(() => {
+    if (lesson && lesson.isQuiz) {
+      // Redirect to the quiz view
+      navigate(`/courses/${lesson.courseId}/quizzes/${lesson.id}`);
+    }
+  }, [lesson, navigate]);
+
   const fetchLesson = async (lessonId: number) => {
     try {
       setLoading(true);

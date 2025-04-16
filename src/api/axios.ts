@@ -1057,6 +1057,23 @@ export const CourseAPI = {
       };
     }
   },
+  
+  submitQuizAnswers: async (lessonId: number, answers: Record<number, number>): Promise<ApiResponse<number>> => {
+    try {
+      console.log(`Submitting answers for quiz ${lessonId}:`, answers);
+      const response = await API.post<ApiResponse<number>>(`/api/Quiz/lessons/${lessonId}/submit`, answers);
+      return response.data;
+    } catch (error) {
+      console.error(`Error submitting quiz answers for lesson ${lessonId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to submit quiz answers',
+        errors: ['Network error while submitting quiz answers'],
+        statusCode: 500,
+        data: 0
+      };
+    }
+  },
 };
 
 export const UserAPI = {

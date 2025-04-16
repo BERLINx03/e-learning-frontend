@@ -24,6 +24,7 @@ import Profile from './pages/Profile';
 import ProfileEdit from './pages/ProfileEdit';
 import MyCourses from './pages/student/MyCourses';
 import QuizManagement from './pages/instructor/quizzes/QuizManagement';
+import QuizView from './pages/student/QuizView';
 
 // Theme wrapper component to ensure theme changes are properly applied
 const ThemedApp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -72,6 +73,7 @@ function App() {
                   {/* Student-only routes */}
                   <Route element={<ProtectedRoute allowedRoles={['student']} />}>
                     <Route path="/my-courses" element={<MyCourses />} />
+                    <Route path="/courses/:courseId/quizzes/:lessonId" element={<QuizView />} />
                   </Route>
                   
                   {/* Instructor-only routes */}

@@ -92,7 +92,13 @@ const CourseContent: React.FC<CourseContentProps> = ({ courseId, isEnrolled: pro
   };
 
   const handleLessonSelect = (lesson: Lesson) => {
-    setActiveLesson(lesson);
+    if (lesson.isQuiz && isEnrolled) {
+      // If the lesson is a quiz and the user is enrolled, navigate to the quiz view
+      navigate(`/courses/${courseId}/quizzes/${lesson.id}`);
+    } else {
+      // Otherwise just set the active lesson
+      setActiveLesson(lesson);
+    }
   };
 
   const handleEnroll = async () => {
