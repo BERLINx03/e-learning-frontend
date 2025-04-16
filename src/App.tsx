@@ -23,6 +23,7 @@ import LessonDetails from './pages/lessons/LessonDetails';
 import Profile from './pages/Profile';
 import ProfileEdit from './pages/ProfileEdit';
 import MyCourses from './pages/student/MyCourses';
+import QuizManagement from './pages/instructor/quizzes/QuizManagement';
 
 // Theme wrapper component to ensure theme changes are properly applied
 const ThemedApp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -80,6 +81,8 @@ function App() {
                     <Route path="/instructor/courses/create" element={<CourseForm />} />
                     <Route path="/instructor/courses/edit/:courseId" element={<CourseForm />} />
                     <Route path="/instructor/courses/:courseId/lessons" element={<LessonManagement />} />
+                    <Route path="/instructor/courses/:courseId/quizzes/new" element={<QuizManagement />} />
+                    <Route path="/instructor/courses/:courseId/quizzes/:quizId" element={<QuizManagement />} />
                   </Route>
                   
                   {/* Admin-only routes */}

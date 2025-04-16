@@ -21,7 +21,8 @@ const LessonManagement: React.FC = () => {
     description: '',
     content: '',
     documentUrl: '',
-    order: 0
+    order: 0,
+    isQuiz: false
   });
 
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -77,7 +78,8 @@ const LessonManagement: React.FC = () => {
       description: '',
       content: '',
       documentUrl: '',
-      order: lessons.length + 1
+      order: lessons.length + 1,
+      isQuiz: false
     });
     setVideoFile(null);
     setIsCreating(true);
@@ -90,7 +92,8 @@ const LessonManagement: React.FC = () => {
       description: lesson.description,
       content: lesson.content || '',
       documentUrl: lesson.documentUrl || '',
-      order: lesson.order + 1
+      order: lesson.order + 1,
+      isQuiz: lesson.isQuiz || false
     });
     setVideoFile(null);
     setIsCreating(false);
@@ -133,7 +136,7 @@ const LessonManagement: React.FC = () => {
         description: formData.description,
         courseId: Number(courseId),
         documentUrl: formData.documentUrl || "",
-        isQuiz: false,
+        isQuiz: formData.isQuiz || false,
         order: formData.order - 1
       };
       
@@ -198,7 +201,7 @@ const LessonManagement: React.FC = () => {
               toast.error('Failed to upload video. Please try again.');
             }
           }
-          toast.success('Lesson created successfully!');
+          toast.success(formData.isQuiz ? 'Quiz created successfully!' : 'Lesson created successfully!');
           setIsCreating(false);
         }
       } else if (selectedLesson) {
@@ -408,6 +411,15 @@ const LessonManagement: React.FC = () => {
             </svg>
             Add Lesson
           </button>
+          <button
+            onClick={() => navigate(`/instructor/courses/${courseId}/quizzes/new`)}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+          >
+            <svg className="w-5 h-5 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Add Quiz
+          </button>
         </div>
       </div>
 
@@ -451,6 +463,10 @@ const LessonManagement: React.FC = () => {
                         <span className="text-xs px-2 py-1 rounded-full bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200">
                           Video
                         </span>
+                      ) : lesson.isQuiz ? (
+                        <span className="text-xs px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-200">
+                          Quiz
+                        </span>
                       ) : (
                         <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                           Text
@@ -469,16 +485,52 @@ const LessonManagement: React.FC = () => {
           <div className="bg-card rounded-lg shadow-sm">
             <div className="p-4 bg-secondary border-b border-primary">
               <h2 className="text-lg font-medium text-color-primary">
-                {isCreating ? 'Create New Lesson' : selectedLesson ? 'Edit Lesson' : 'Lesson Details'}
+                {isCreating 
+                  ? (formData.isQuiz ? 'Create New Quiz' : 'Create New Lesson') 
+                  : selectedLesson 
+                    ? (selectedLesson.isQuiz ? 'Edit Quiz' : 'Edit Lesson') 
+                    : 'Lesson Details'}
               </h2>
             </div>
             {isCreating || selectedLesson ? (
               <div className="p-4">
                 <form onSubmit={handleSubmit}>
                   <div className="space-y-6">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                          formData.isQuiz 
+                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' 
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                        }`}>
+                          {formData.isQuiz ? (
+                            <>
+                              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                              </svg>
+                              Quiz
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Lesson
+                            </>
+                          )}
+                        </span>
+                        <p className="ml-3 text-sm text-color-secondary">
+                          {formData.isQuiz 
+                            ? 'This will be created as a quiz that students can take.' 
+                            : 'This will be created as a regular lesson with content.'}
+                        </p>
+                      </div>
+                    </div>
+
                     <div>
                       <label htmlFor="title" className="block text-sm font-medium text-color-primary mb-1">
-                        Lesson Title*
+                        {formData.isQuiz ? 'Quiz Title*' : 'Lesson Title*'}
                       </label>
                       <input
                         type="text"
@@ -494,7 +546,7 @@ const LessonManagement: React.FC = () => {
 
                     <div>
                       <label htmlFor="description" className="block text-sm font-medium text-color-primary mb-1">
-                        Description*
+                        {formData.isQuiz ? 'Quiz Description*' : 'Description*'}
                       </label>
                       <textarea
                         name="description"
@@ -504,13 +556,13 @@ const LessonManagement: React.FC = () => {
                         value={formData.description}
                         onChange={handleInputChange}
                         className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter lesson description"
+                        placeholder={formData.isQuiz ? "Enter quiz description" : "Enter lesson description"}
                       />
                     </div>
 
                     <div>
                       <label htmlFor="order" className="block text-sm font-medium text-color-primary mb-1">
-                        Lesson Order*
+                        {formData.isQuiz ? 'Quiz Order*' : 'Lesson Order*'}
                       </label>
                       <input
                         type="number"
@@ -528,36 +580,40 @@ const LessonManagement: React.FC = () => {
                       </p>
                     </div>
 
-                    <div>
-                      <label htmlFor="video" className="block text-sm font-medium text-color-primary mb-1">
-                        Video Upload
-                      </label>
-                      <div className="flex items-center">
-                        <input
-                          type="file"
-                          id="video"
-                          ref={fileInputRef}
-                          accept="video/mp4,video/webm"
-                          onChange={handleVideoChange}
-                          className="hidden"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-color-primary bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          {videoFile ? 'Change Video' : 'Select Video'}
-                        </button>
-                        {videoFile && (
-                          <span className="ml-3 text-sm text-color-secondary">
-                            {videoFile.name}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm text-color-secondary">
-                        Supported formats: MP4, WebM
-                      </p>
-                    </div>
+                    {!formData.isQuiz && (
+                      <>
+                        <div>
+                          <label htmlFor="video" className="block text-sm font-medium text-color-primary mb-1">
+                            Video Upload
+                          </label>
+                          <div className="flex items-center">
+                            <input
+                              type="file"
+                              id="video"
+                              ref={fileInputRef}
+                              accept="video/mp4,video/webm"
+                              onChange={handleVideoChange}
+                              className="hidden"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-color-primary bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                              {videoFile ? 'Change Video' : 'Select Video'}
+                            </button>
+                            {videoFile && (
+                              <span className="ml-3 text-sm text-color-secondary">
+                                {videoFile.name}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-sm text-color-secondary">
+                            Supported formats: MP4, WebM
+                          </p>
+                        </div>
+                      </>
+                    )}
 
                     <div>
                       <label htmlFor="documentUrl" className="block text-sm font-medium text-color-primary mb-1">
@@ -577,23 +633,25 @@ const LessonManagement: React.FC = () => {
                       </p>
                     </div>
 
-                    <div>
-                      <label htmlFor="content" className="block text-sm font-medium text-color-primary mb-1">
-                        Lesson Content (optional)
-                      </label>
-                      <textarea
-                        name="content"
-                        id="content"
-                        rows={6}
-                        value={formData.content}
-                        onChange={handleInputChange}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter lesson content in HTML format"
-                      />
-                      <p className="mt-1 text-sm text-color-secondary">
-                        You can use HTML to format your content
-                      </p>
-                    </div>
+                    {!formData.isQuiz && (
+                      <div>
+                        <label htmlFor="content" className="block text-sm font-medium text-color-primary mb-1">
+                          Lesson Content (optional)
+                        </label>
+                        <textarea
+                          name="content"
+                          id="content"
+                          rows={6}
+                          value={formData.content}
+                          onChange={handleInputChange}
+                          className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          placeholder="Enter lesson content in HTML format"
+                        />
+                        <p className="mt-1 text-sm text-color-secondary">
+                          You can use HTML to format your content
+                        </p>
+                      </div>
+                    )}
 
                     <div className="flex justify-between">
                       <div className="flex space-x-3">
@@ -611,9 +669,26 @@ const LessonManagement: React.FC = () => {
                               {selectedLesson ? 'Updating...' : 'Creating...'}
                             </>
                           ) : (
-                            selectedLesson ? 'Update Lesson' : 'Create Lesson'
+                            selectedLesson 
+                              ? (formData.isQuiz ? 'Update Quiz' : 'Update Lesson')
+                              : (formData.isQuiz ? 'Create Quiz' : 'Create Lesson')
                           )}
                         </button>
+                        
+                        {/* Add View Quiz button to edit quiz questions when a quiz is selected */}
+                        {selectedLesson && selectedLesson.isQuiz && (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/instructor/courses/${courseId}/quizzes/${selectedLesson.id}`)}
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed ml-3"
+                          >
+                            <svg className="w-4 h-4 mr-2 -ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Edit Quiz Questions
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => {

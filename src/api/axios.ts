@@ -988,6 +988,75 @@ export const CourseAPI = {
       };
     }
   },
+
+  // Quiz Question APIs
+  addQuizQuestion: async (lessonId: number, questionData: any): Promise<ApiResponse<any>> => {
+    try {
+      const response = await API.post<ApiResponse<any>>(`/api/Quiz/lessons/${lessonId}/questions`, questionData);
+      return response.data;
+    } catch (error) {
+      console.error(`Error adding quiz question to lesson ${lessonId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to add quiz question',
+        errors: ['Network error while adding quiz question'],
+        statusCode: 500,
+        data: null
+      };
+    }
+  },
+  
+  updateQuizQuestion: async (questionId: number, questionData: any): Promise<ApiResponse<boolean>> => {
+    try {
+      console.log(`Updating quiz question ${questionId} with data:`, questionData);
+      const response = await API.put<ApiResponse<boolean>>(`/api/Quiz/questions/${questionId}`, questionData);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating quiz question ${questionId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to update quiz question',
+        errors: ['Network error while updating quiz question'],
+        statusCode: 500,
+        data: false
+      };
+    }
+  },
+  
+  deleteQuizQuestion: async (questionId: number): Promise<ApiResponse<boolean>> => {
+    try {
+      console.log(`Deleting quiz question ${questionId}`);
+      const response = await API.delete<ApiResponse<boolean>>(`/api/Quiz/questions/${questionId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting quiz question ${questionId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to delete quiz question',
+        errors: ['Network error while deleting quiz question'],
+        statusCode: 500,
+        data: false
+      };
+    }
+  },
+  
+  getQuizQuestions: async (lessonId: number): Promise<ApiResponse<QuizQuestion[]>> => {
+    try {
+      // Ensure the endpoint URL case matches exactly what the backend expects
+      const response = await API.get<ApiResponse<QuizQuestion[]>>(`/api/Quiz/lessons/${lessonId}/questions`);
+      console.log(`API call to /api/Quiz/lessons/${lessonId}/questions`, response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching quiz questions for lesson ${lessonId}:`, error);
+      return {
+        isSuccess: false,
+        message: 'Failed to fetch quiz questions',
+        errors: ['Network error while fetching quiz questions'],
+        statusCode: 500,
+        data: []
+      };
+    }
+  },
 };
 
 export const UserAPI = {
